@@ -124,6 +124,17 @@ class ChatsController {
   ) {
     return session.chatsUnarchiveChat(chatId);
   }
+
+  @Post(':chatId/unread')
+  @SessionApiParam
+  @ChatIdApiParam
+  @ApiOperation({ summary: 'Unread the chat' })
+  unreadChat(
+    @WorkingSessionParam session: WhatsappSession,
+    @Param('chatId') chatId: string,
+  ) {
+    return session.chatsUnreadChat(chatId);
+  }
 }
 
 export { ChatsController };

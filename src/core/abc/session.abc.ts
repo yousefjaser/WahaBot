@@ -359,6 +359,10 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
+  public chatsUnreadChat(chatId: string): Promise<any> {
+    throw new NotImplementedByEngineError();
+  }
+
   /**
    * Labels methods
    */

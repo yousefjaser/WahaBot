@@ -566,6 +566,11 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     return this.whatsapp.unarchiveChat(id);
   }
 
+  public chatsUnreadChat(chatId: string): Promise<any> {
+    const id = this.ensureSuffix(chatId);
+    return this.whatsapp.markChatUnread(id);
+  }
+
   /**
    *
    * Label methods

@@ -833,6 +833,15 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return this.chatsPutArchive(chatId, false);
   }
 
+  public async chatsUnreadChat(chatId: string): Promise<any> {
+    const jid = toJID(chatId);
+    const messages = await this.store.getMessagesByJid(jid, 1);
+    return await this.sock.chatModify(
+      { markRead: false, lastMessages: messages },
+      jid,
+    );
+  }
+
   /**
    * Labels methods
    */
