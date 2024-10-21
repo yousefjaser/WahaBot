@@ -340,7 +340,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
 
       log.info(`Session state changed to bad state, waiting for recovery...`);
       this.engineStateCheckDelayedJob.schedule(async () => {
-        if (!this.startDelayedJob.scheduled) {
+        if (this.startDelayedJob.scheduled) {
           log.info('Session is restarting already, skip check.');
           return;
         }
