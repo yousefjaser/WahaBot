@@ -17,11 +17,15 @@ import {
   SessionApiParam,
   WorkingSessionParam,
 } from '@waha/nestjs/params/SessionApiParam';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 
 import { SessionManager } from '../core/abc/manager.abc';
 import { WhatsappSession } from '../core/abc/session.abc';
 import { parseBool } from '../helpers';
-import { GetChatMessagesQuery, GetChatsQuery } from '../structures/chats.dto';
+import {
+  ChatsPaginationParams,
+  GetChatMessagesQuery,
+} from '../structures/chats.dto';
 import { EditMessageRequest } from '../structures/chatting.dto';
 
 @ApiSecurity('api_key')
@@ -36,9 +40,9 @@ class ChatsController {
   @ApiOperation({ summary: 'Get chats' })
   getChats(
     @WorkingSessionParam session: WhatsappSession,
-    @Query() query: GetChatsQuery,
+    @Query() pagination: ChatsPaginationParams,
   ) {
-    return session.getChats(query);
+    return session.getChats(pagination);
   }
 
   @Delete(':chatId')

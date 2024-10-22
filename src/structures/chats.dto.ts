@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 import { ChatIdProperty } from '@waha/structures/properties.dto';
-import { Type } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { getEngineName } from '@waha/version';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
 
 import { SessionQuery } from './base.dto';
 
@@ -20,16 +21,20 @@ export class GetChatMessagesQuery extends SessionQuery {
   downloadMedia: boolean = true;
 }
 
-export class GetChatsQuery {
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  limit?: number;
+export enum ChatSortField {
+  CONVERSATION_TIMESTAMP = 'conversationTimestamp',
+  ID = 'id',
+  NAME = 'name',
+}
 
-  @IsNumber()
+export class ChatsPaginationParams extends PaginationParams {
+  @ApiProperty({
+    description: 'Sort by field',
+    enum: ChatSortField,
+  })
   @IsOptional()
-  @Type(() => Number)
-  offset?: number;
+  @IsEnum(ChatSortField)
+  sortBy?: string;
 }
 
 /**

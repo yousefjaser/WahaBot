@@ -16,6 +16,7 @@ import {
 } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
 import { ILabelAssociationRepository } from '@waha/core/engines/noweb/store/ILabelAssociationsRepository';
 import { ILabelsRepository } from '@waha/core/engines/noweb/store/ILabelsRepository';
+import { PaginationParams, SortOrder } from '@waha/structures/pagination.dto';
 import { toNumber } from 'lodash';
 import { Logger } from 'pino';
 
@@ -326,16 +327,18 @@ export class NowebPersistentStore implements INowebStore {
     return this.messagesRepo.getAllByJid(toJID(chatId), toNumber(limit));
   }
 
-  getChats(limit?: number, offset?: number): Promise<Chat[]> {
-    return this.chatRepo.getAllWithMessages(limit, offset);
+  getChats(pagination: PaginationParams): Promise<Chat[]> {
+    pagination.sortBy ||= 'conversationTimestamp';
+    pagination.sortOrder ||= SortOrder.DESC;
+    return this.chatRepo.getAllWithMessages(pagination);
   }
 
   getContactById(jid) {
     return this.contactRepo.getById(jid);
   }
 
-  getContacts() {
-    return this.contactRepo.getAll();
+  getContacts(pagination: PaginationParams) {
+    return this.contactRepo.getAll(pagination);
   }
 
   getLabels(): Promise<Label[]> {

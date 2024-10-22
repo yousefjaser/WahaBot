@@ -19,7 +19,7 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { ChatArchiveEvent, GetChatsQuery } from '@waha/structures/chats.dto';
+import { ChatArchiveEvent, ChatSortField } from '@waha/structures/chats.dto';
 import {
   ChatRequest,
   CheckNumberStatusQuery,
@@ -54,9 +54,11 @@ import {
 } from '@waha/structures/groups.dto';
 import { Label, LabelID } from '@waha/structures/labels.dto';
 import { ReplyToMessage } from '@waha/structures/message.dto';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
 import { MeInfo } from '@waha/structures/sessions.dto';
 import { WAMessageRevokedBody } from '@waha/structures/webhooks.dto';
+import { PaginatorInMemory } from '@waha/utils/Paginator';
 import { waitUntil } from '@waha/utils/promiseTimeout';
 import { SingleDelayedJobRunner } from '@waha/utils/SingleDelayedJobRunner';
 import {
@@ -525,8 +527,16 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   /**
    * Chats methods
    */
-  getChats(query: GetChatsQuery) {
-    return this.whatsapp.getChats(query.limit, query.offset);
+  getChats(pagination: PaginationParams) {
+    switch (pagination.sortBy) {
+      case ChatSortField.ID:
+        pagination.sortBy = 'id._serialized';
+        break;
+      case ChatSortField.CONVERSATION_TIMESTAMP:
+        pagination.sortBy = 't';
+        break;
+    }
+    return this.whatsapp.getChats(pagination);
   }
 
   async getChatMessages(chatId: string, limit: number, downloadMedia: boolean) {
@@ -616,10 +626,11 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       .then(this.toWAContact);
   }
 
-  getContacts() {
-    return this.whatsapp
-      .getContacts()
-      .then((contacts) => contacts.map(this.toWAContact));
+  async getContacts(pagination: PaginationParams) {
+    const contactsWEBJS = await this.whatsapp.getContacts();
+    const contacts = contactsWEBJS.map(this.toWAContact);
+    const paginator = new PaginatorInMemory(pagination);
+    return paginator.apply(contacts);
   }
 
   public async getContactAbout(query: ContactQuery) {

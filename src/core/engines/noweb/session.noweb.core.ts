@@ -38,7 +38,6 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { GetChatsQuery } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { ContactQuery, ContactRequest } from '@waha/structures/contacts.dto';
 import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
@@ -48,6 +47,7 @@ import {
   LabelID,
 } from '@waha/structures/labels.dto';
 import { ReplyToMessage } from '@waha/structures/message.dto';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 import {
   PollVote,
   PollVotePayload,
@@ -806,8 +806,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
    * Chats methods
    */
 
-  async getChats(query: GetChatsQuery) {
-    const chats = await this.store.getChats(query.limit, query.offset);
+  async getChats(pagination: PaginationParams) {
+    const chats = await this.store.getChats(pagination);
     // Remove unreadCount, it's not ready yet
     chats.forEach((chat) => delete chat.unreadCount);
     return chats;
@@ -901,8 +901,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return this.toWAContact(contact);
   }
 
-  async getContacts() {
-    const contacts = await this.store.getContacts();
+  async getContacts(pagination: PaginationParams) {
+    const contacts = await this.store.getContacts(pagination);
     return contacts.map(this.toWAContact);
   }
 

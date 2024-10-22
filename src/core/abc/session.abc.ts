@@ -3,9 +3,9 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { GetChatsQuery } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { Label, LabelID } from '@waha/structures/labels.dto';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 import { WAMessage } from '@waha/structures/responses.dto';
 import { LoggerBuilder } from '@waha/utils/logging';
 import { EventEmitter } from 'events';
@@ -319,7 +319,7 @@ export abstract class WhatsappSession {
   /**
    * Chats methods
    */
-  public getChats(query: GetChatsQuery) {
+  public getChats(pagination: PaginationParams) {
     throw new NotImplementedByEngineError();
   }
 
@@ -390,7 +390,7 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public getContacts() {
+  public getContacts(pagination: PaginationParams) {
     throw new NotImplementedByEngineError();
   }
 

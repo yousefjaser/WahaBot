@@ -5,6 +5,7 @@ import {
   proto,
 } from '@adiwajshing/baileys';
 import { Label } from '@adiwajshing/baileys/lib/Types/Label';
+import { PaginationParams } from '@waha/structures/pagination.dto';
 
 export interface INowebStore {
   presences: any;
@@ -19,9 +20,9 @@ export interface INowebStore {
 
   getMessagesByJid(chatId: string, limit: number): Promise<any>;
 
-  getChats(limit?: number, offset?: number): Promise<Chat[]>;
+  getChats(pagination: PaginationParams): Promise<Chat[]>;
 
-  getContacts(): Promise<Contact[]>;
+  getContacts(pagination: PaginationParams): Promise<Contact[]>;
 
   getContactById(jid: string): Promise<Contact>;
 
