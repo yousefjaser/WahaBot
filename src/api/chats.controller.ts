@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -24,6 +25,7 @@ import { WhatsappSession } from '../core/abc/session.abc';
 import { parseBool } from '../helpers';
 import {
   ChatsPaginationParams,
+  GetChatMessageQuery,
   GetChatMessagesQuery,
 } from '../structures/chats.dto';
 import { EditMessageRequest } from '../structures/chatting.dto';
@@ -67,6 +69,23 @@ class ChatsController {
   ) {
     const downloadMedia = parseBool(query.downloadMedia);
     return session.getChatMessages(chatId, query.limit, downloadMedia);
+  }
+
+  @Get(':chatId/messages/:messageId')
+  @SessionApiParam
+  @ApiOperation({ summary: 'Gets message by id' })
+  @ChatIdApiParam
+  async getChatMessage(
+    @Query() query: GetChatMessageQuery,
+    @WorkingSessionParam session: WhatsappSession,
+    @Param('chatId') chatId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    const message = await session.getChatMessage(chatId, messageId, query);
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+    return message;
   }
 
   @Delete(':chatId/messages')

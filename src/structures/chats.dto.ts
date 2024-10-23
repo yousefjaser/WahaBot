@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BooleanString } from '@waha/nestjs/validation/BooleanString';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import { ChatIdProperty } from '@waha/structures/properties.dto';
-import { getEngineName } from '@waha/version';
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 
-import { SessionQuery } from './base.dto';
+import { SessionQuery, WHATSAPP_DEFAULT_SESSION_NAME } from './base.dto';
 
 /**
  * Queries
@@ -18,6 +19,18 @@ export class GetChatMessagesQuery extends SessionQuery {
     required: false,
     description: 'Download media for messages',
   })
+  downloadMedia: boolean = true;
+}
+
+export class GetChatMessageQuery {
+  @ApiProperty({
+    example: true,
+    required: false,
+    description: 'Download media for messages',
+  })
+  @Transform(BooleanString)
+  @IsBoolean()
+  @IsOptional()
   downloadMedia: boolean = true;
 }
 

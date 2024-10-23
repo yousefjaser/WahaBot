@@ -19,7 +19,11 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { ChatArchiveEvent, ChatSortField } from '@waha/structures/chats.dto';
+import {
+  ChatArchiveEvent,
+  ChatSortField,
+  GetChatMessageQuery,
+} from '@waha/structures/chats.dto';
 import {
   ChatRequest,
   CheckNumberStatusQuery,
@@ -554,6 +558,16 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     let result = await Promise.all(promises);
     result = result.filter(Boolean);
     return result;
+  }
+
+  public async getChatMessage(
+    chatId: string,
+    messageId: string,
+    query: GetChatMessageQuery,
+  ): Promise<null | WAMessage> {
+    const message = await this.whatsapp.getMessageById(messageId);
+    if (!message) return null;
+    return await this.processIncomingMessage(message, query.downloadMedia);
   }
 
   async deleteChat(chatId) {

@@ -3,6 +3,7 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
+import { GetChatMessageQuery } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { Label, LabelID } from '@waha/structures/labels.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
@@ -332,6 +333,14 @@ export abstract class WhatsappSession {
     limit: number,
     downloadMedia: boolean,
   ) {
+    throw new NotImplementedByEngineError();
+  }
+
+  public getChatMessage(
+    chatId: string,
+    messageId: string,
+    query: GetChatMessageQuery,
+  ): Promise<null | WAMessage> {
     throw new NotImplementedByEngineError();
   }
 

@@ -42,6 +42,10 @@ export class NowebInMemoryStore implements INowebStore {
     throw new BadRequestException(this.errorMessage);
   }
 
+  getMessageById(chatId: string, messageId: string): Promise<any> {
+    throw new BadRequestException(this.errorMessage);
+  }
+
   getChats(pagination: PaginationParams): Promise<Chat[]> {
     throw new BadRequestException(this.errorMessage);
   }

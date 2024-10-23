@@ -20,6 +20,8 @@ export interface INowebStore {
 
   getMessagesByJid(chatId: string, limit: number): Promise<any>;
 
+  getMessageById(chatId: string, messageId: string): Promise<any>;
+
   getChats(pagination: PaginationParams): Promise<Chat[]>;
 
   getContacts(pagination: PaginationParams): Promise<Contact[]>;

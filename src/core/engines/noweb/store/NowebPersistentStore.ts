@@ -327,6 +327,10 @@ export class NowebPersistentStore implements INowebStore {
     return this.messagesRepo.getAllByJid(toJID(chatId), toNumber(limit));
   }
 
+  getMessageById(chatId: string, messageId: string): Promise<any> {
+    return this.messagesRepo.getByJidById(chatId, messageId);
+  }
+
   getChats(pagination: PaginationParams): Promise<Chat[]> {
     pagination.sortBy ||= 'conversationTimestamp';
     pagination.sortOrder ||= SortOrder.DESC;

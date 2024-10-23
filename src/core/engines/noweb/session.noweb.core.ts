@@ -38,6 +38,7 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
+import { GetChatMessageQuery } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { ContactQuery, ContactRequest } from '@waha/structures/contacts.dto';
 import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
@@ -776,6 +777,17 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     let result = await Promise.all(promises);
     result = result.filter(Boolean);
     return result;
+  }
+
+  public async getChatMessage(
+    chatId: string,
+    messageId: string,
+    query: GetChatMessageQuery,
+  ): Promise<null | WAMessage> {
+    const key = parseMessageIdSerialized(messageId, true);
+    const message = await this.store.getMessageById(toJID(chatId), key.id);
+    if (!message) return null;
+    return await this.processIncomingMessage(message, query.downloadMedia);
   }
 
   async setReaction(request: MessageReactionRequest) {
