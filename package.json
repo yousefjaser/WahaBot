@@ -83,7 +83,8 @@
   },
   "resolutions": {
     "ws": "^8.18.0",
-    "puppeteer": "^21.0.0"
+    "puppeteer": "^21.0.0",
+    "whatwg-url": "13.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
