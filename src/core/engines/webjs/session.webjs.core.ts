@@ -134,7 +134,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     // this.log.debug(`Using web version: '${webVersion}'`);
     return {
       puppeteer: {
-        headless: true,
+        headless: 'new',
         executablePath: this.getBrowserExecutablePath(),
         args: this.getBrowserArgsForPuppeteer(),
         dumpio: this.isDebugEnabled(),
