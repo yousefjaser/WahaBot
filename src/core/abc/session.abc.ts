@@ -3,7 +3,11 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { GetChatMessageQuery } from '@waha/structures/chats.dto';
+import {
+  GetChatMessageQuery,
+  GetChatMessagesFilter,
+  GetChatMessagesQuery,
+} from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { Label, LabelID } from '@waha/structures/labels.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
@@ -308,10 +312,6 @@ export abstract class WhatsappSession {
 
   abstract stopTyping(chat: ChatRequest);
 
-  getMessages(query: GetMessageQuery) {
-    throw new NotImplementedByEngineError();
-  }
-
   abstract setReaction(request: MessageReactionRequest);
 
   setStar(request: MessageStarRequest): Promise<void> {
@@ -331,8 +331,8 @@ export abstract class WhatsappSession {
 
   public getChatMessages(
     chatId: string,
-    limit: number,
-    downloadMedia: boolean,
+    query: GetChatMessagesQuery,
+    filter: GetChatMessagesFilter,
   ) {
     throw new NotImplementedByEngineError();
   }

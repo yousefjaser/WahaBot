@@ -5,6 +5,7 @@ import {
   proto,
 } from '@adiwajshing/baileys';
 import { Label } from '@adiwajshing/baileys/lib/Types/Label';
+import { GetChatMessagesFilter } from '@waha/structures/chats.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 
 export interface INowebStore {
@@ -18,7 +19,11 @@ export interface INowebStore {
 
   loadMessage(jid: string, id: string): Promise<proto.IWebMessageInfo>;
 
-  getMessagesByJid(chatId: string, limit: number): Promise<any>;
+  getMessagesByJid(
+    chatId: string,
+    filter: GetChatMessagesFilter,
+    pagination: PaginationParams,
+  ): Promise<any>;
 
   getMessageById(chatId: string, messageId: string): Promise<any>;
 

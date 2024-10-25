@@ -10,7 +10,7 @@ import {
 } from '@waha/core/exceptions';
 import { IMediaEngineProcessor } from '@waha/core/media/IMediaEngineProcessor';
 import { QR } from '@waha/core/QR';
-import { parseBool, splitAt } from '@waha/helpers';
+import { splitAt } from '@waha/helpers';
 import { PairingCodeResponse } from '@waha/structures/auth.dto';
 import { CallData } from '@waha/structures/calls.dto';
 import {
@@ -23,12 +23,13 @@ import {
   ChatArchiveEvent,
   ChatSortField,
   GetChatMessageQuery,
+  GetChatMessagesFilter,
+  GetChatMessagesQuery,
 } from '@waha/structures/chats.dto';
 import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
-  GetMessageQuery,
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
@@ -499,10 +500,6 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     await chat.clearState();
   }
 
-  async getMessages(query: GetMessageQuery) {
-    return this.getChatMessages(query.chatId, query.limit, query.downloadMedia);
-  }
-
   async setReaction(request: MessageReactionRequest) {
     const message = this.recreateMessage(request.messageId);
     return message.react(request.reaction);
@@ -543,14 +540,27 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     return this.whatsapp.getChats(pagination);
   }
 
-  async getChatMessages(chatId: string, limit: number, downloadMedia: boolean) {
-    downloadMedia = parseBool(downloadMedia);
-    const chat: Chat = await this.whatsapp.getChatById(
+  public async getChatMessages(
+    chatId: string,
+    query: GetChatMessagesQuery,
+    filter: GetChatMessagesFilter,
+  ) {
+    if (chatId == 'all') {
+      throw new NotImplementedByEngineError(
+        "Can not get messages from 'all' in WEBJS",
+      );
+    }
+
+    const limit = query.limit;
+    const downloadMedia = query.downloadMedia;
+    // Test there's chat with id
+    await this.whatsapp.getChatById(this.ensureSuffix(chatId));
+    const pagination: PaginationParams = query;
+    const messages = await this.whatsapp.getMessages(
       this.ensureSuffix(chatId),
+      filter,
+      pagination,
     );
-    const messages = await chat.fetchMessages({
-      limit: limit,
-    });
     const promises = [];
     for (const msg of messages) {
       promises.push(this.processIncomingMessage(msg, downloadMedia));

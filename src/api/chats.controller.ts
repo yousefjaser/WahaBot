@@ -18,7 +18,6 @@ import {
   SessionApiParam,
   WorkingSessionParam,
 } from '@waha/nestjs/params/SessionApiParam';
-import { PaginationParams } from '@waha/structures/pagination.dto';
 
 import { SessionManager } from '../core/abc/manager.abc';
 import { WhatsappSession } from '../core/abc/session.abc';
@@ -26,6 +25,7 @@ import { parseBool } from '../helpers';
 import {
   ChatsPaginationParams,
   GetChatMessageQuery,
+  GetChatMessagesFilter,
   GetChatMessagesQuery,
 } from '../structures/chats.dto';
 import { EditMessageRequest } from '../structures/chatting.dto';
@@ -62,13 +62,14 @@ class ChatsController {
   @SessionApiParam
   @ApiOperation({ summary: 'Gets messages in the chat' })
   @ChatIdApiParam
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   getChatMessages(
     @Query() query: GetChatMessagesQuery,
+    @Query() filter: GetChatMessagesFilter,
     @WorkingSessionParam session: WhatsappSession,
     @Param('chatId') chatId: string,
   ) {
-    const downloadMedia = parseBool(query.downloadMedia);
-    return session.getChatMessages(chatId, query.limit, downloadMedia);
+    return session.getChatMessages(chatId, query, filter);
   }
 
   @Get(':chatId/messages/:messageId')

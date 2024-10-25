@@ -38,7 +38,11 @@ import {
   CreateChannelRequest,
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
-import { GetChatMessageQuery } from '@waha/structures/chats.dto';
+import {
+  GetChatMessageQuery,
+  GetChatMessagesFilter,
+  GetChatMessagesQuery,
+} from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { ContactQuery, ContactRequest } from '@waha/structures/contacts.dto';
 import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
@@ -68,7 +72,6 @@ import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
-  GetMessageQuery,
   MessageContactVcardRequest,
   MessageDestination,
   MessageFileRequest,
@@ -755,19 +758,17 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return this.sock.sendPresenceUpdate('paused', chatId);
   }
 
-  async getMessages(query: GetMessageQuery) {
-    return this.getChatMessages(query.chatId, query.limit, query.downloadMedia);
-  }
-
   public async getChatMessages(
     chatId: string,
-    limit: number,
-    downloadMedia: boolean,
+    query: GetChatMessagesQuery,
+    filter: GetChatMessagesFilter,
   ) {
-    downloadMedia = parseBool(downloadMedia);
+    const downloadMedia = query.downloadMedia;
+    const pagination = query as PaginationParams;
     const messages = await this.store.getMessagesByJid(
       toJID(chatId),
-      toNumber(limit),
+      filter,
+      pagination,
     );
 
     const promises = [];
@@ -830,7 +831,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     archive: boolean,
   ): Promise<any> {
     const jid = toJID(chatId);
-    const messages = await this.store.getMessagesByJid(jid, 1);
+    const messages = await this.store.getMessagesByJid(jid, {}, { limit: 1 });
     return await this.sock.chatModify(
       { archive: archive, lastMessages: messages },
       jid,
@@ -847,7 +848,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
 
   public async chatsUnreadChat(chatId: string): Promise<any> {
     const jid = toJID(chatId);
-    const messages = await this.store.getMessagesByJid(jid, 1);
+    const messages = await this.store.getMessagesByJid(jid, {}, { limit: 1 });
     return await this.sock.chatModify(
       { markRead: false, lastMessages: messages },
       jid,
@@ -1722,6 +1723,8 @@ function toCusFormat(remoteJid) {
   const number = remoteJid.split('@')[0];
   return ensureSuffix(number);
 }
+
+export const ALL_JID = 'all@s.whatsapp.net';
 
 /**
  * Convert from 11111111111@c.us to 11111111111@s.whatsapp.net

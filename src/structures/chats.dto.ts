@@ -2,23 +2,61 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BooleanString } from '@waha/nestjs/validation/BooleanString';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import { ChatIdProperty } from '@waha/structures/properties.dto';
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
-
-import { SessionQuery, WHATSAPP_DEFAULT_SESSION_NAME } from './base.dto';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsNumber, IsOptional } from 'class-validator';
 
 /**
  * Queries
  */
 
-export class GetChatMessagesQuery extends SessionQuery {
+export class GetChatMessagesFilter {
+  @ApiProperty({
+    required: false,
+    description: 'Filter messages before this timestamp (inclusive)',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  'filter.timestamp.lte'?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Filter messages after this timestamp (inclusive)',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  'filter.timestamp.gte'?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'From me filter (by default shows all messages)',
+  })
+  @Transform(BooleanString)
+  @IsBoolean()
+  @IsOptional()
+  'filter.fromMe'?: boolean;
+}
+
+export class GetChatMessagesQuery {
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
   limit: number = 100;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  offset?: number;
 
   @ApiProperty({
     example: true,
     required: false,
     description: 'Download media for messages',
   })
+  @Transform(BooleanString)
+  @IsBoolean()
+  @IsOptional()
   downloadMedia: boolean = true;
 }
 
