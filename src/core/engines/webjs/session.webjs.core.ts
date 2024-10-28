@@ -3,6 +3,7 @@ import {
   WAHAInternalEvent,
   WhatsappSession,
 } from '@waha/core/abc/session.abc';
+import { LocalAuth } from '@waha/core/engines/webjs/LocalAuth';
 import { WebjsClient } from '@waha/core/engines/webjs/WebjsClient';
 import {
   AvailableInPlusVersion,
@@ -151,6 +152,12 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
 
   protected async buildClient() {
     const clientOptions = this.getClientOptions();
+    clientOptions.authStrategy = new LocalAuth({
+      clientId: this.name,
+      dataPath: undefined,
+      logger: this.logger,
+      rmMaxRetries: undefined,
+    });
     this.addProxyConfig(clientOptions);
     return new WebjsClient(clientOptions);
   }
