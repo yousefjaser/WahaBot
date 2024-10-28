@@ -74,7 +74,16 @@ export class LocalAuth implements AuthStrategy {
     const files = await fs.promises.readdir(dir);
     for (const file of files) {
       if (file.startsWith('Singleton')) {
-        await this.removePathSilently(path.join(dir, file));
+        const filePath = path.join(dir, file);
+        try {
+          await fs.promises.rm(filePath, {
+            maxRetries: this.rmMaxRetries,
+            recursive: true,
+            force: true,
+          });
+        } catch (err) {
+          this.logger.error(err, `Error deleting: ${filePath}`);
+        }
       }
     }
   }
