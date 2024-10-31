@@ -1,4 +1,5 @@
 import { GetChatMessagesFilter } from '@waha/structures/chats.dto';
+import { Label } from '@waha/structures/labels.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import * as lodash from 'lodash';
 import { Client } from 'whatsapp-web.js';
@@ -43,6 +44,44 @@ export class WebjsClient extends Client {
         await window.Store.AppState.logout();
       }
     });
+  }
+
+  async createLabel(name: string, color: number): Promise<number> {
+    const labelId: number = await this.pupPage.evaluate(
+      async (name, color) => {
+        // @ts-ignore
+        return await window.WAHA.WAWebBizLabelEditingAction.labelAddAction(
+          name,
+          color,
+        );
+      },
+      name,
+      color,
+    );
+    return labelId;
+  }
+
+  async deleteLabel(label: Label) {
+    return await this.pupPage.evaluate(async (label) => {
+      // @ts-ignore
+      return await window.WAHA.WAWebBizLabelEditingAction.labelDeleteAction(
+        label.id,
+        label.name,
+        label.color,
+      );
+    }, label);
+  }
+
+  async updateLabel(label: Label) {
+    return await this.pupPage.evaluate(async (label) => {
+      // @ts-ignore
+      return await window.WAHA.WAWebBizLabelEditingAction.labelEditAction(
+        label.id,
+        label.name,
+        undefined, // predefinedId
+        label.color,
+      );
+    }, label);
   }
 
   async getChats(pagination?: PaginationParams) {

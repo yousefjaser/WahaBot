@@ -58,7 +58,7 @@ import {
   ParticipantsRequest,
   SettingsSecurityChangeInfo,
 } from '@waha/structures/groups.dto';
-import { Label, LabelID } from '@waha/structures/labels.dto';
+import { Label, LabelDTO, LabelID } from '@waha/structures/labels.dto';
 import { ReplyToMessage } from '@waha/structures/message.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
@@ -630,6 +630,24 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   public async getLabels(): Promise<Label[]> {
     const labels = await this.whatsapp.getLabels();
     return labels.map(this.toLabel);
+  }
+
+  public async createLabel(label: LabelDTO): Promise<Label> {
+    const labelId = await this.whatsapp.createLabel(label.name, label.color);
+    return {
+      id: labelId.toString(),
+      name: label.name,
+      color: label.color,
+      colorHex: Label.toHex(label.color),
+    };
+  }
+
+  public async updateLabel(label: Label): Promise<Label> {
+    return await this.whatsapp.updateLabel(label);
+  }
+
+  public deleteLabel(label: Label): Promise<void> {
+    return this.whatsapp.deleteLabel(label);
   }
 
   public getChatsByLabelId(labelId: string) {
