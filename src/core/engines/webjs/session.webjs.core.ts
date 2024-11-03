@@ -1,8 +1,10 @@
+import { UnprocessableEntityException } from '@nestjs/common';
 import {
   getChannelInviteLink,
   WAHAInternalEvent,
   WhatsappSession,
 } from '@waha/core/abc/session.abc';
+import { toJID } from '@waha/core/engines/noweb/session.noweb.core';
 import { LocalAuth } from '@waha/core/engines/webjs/LocalAuth';
 import { WebjsClient } from '@waha/core/engines/webjs/WebjsClient';
 import {
@@ -63,6 +65,11 @@ import { ReplyToMessage } from '@waha/structures/message.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
 import { MeInfo } from '@waha/structures/sessions.dto';
+import {
+  BROADCAST_ID,
+  StatusRequest,
+  TextStatus,
+} from '@waha/structures/status.dto';
 import { WAMessageRevokedBody } from '@waha/structures/webhooks.dto';
 import { PaginatorInMemory } from '@waha/utils/Paginator';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
@@ -966,6 +973,22 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
           `WEBJS engine doesn't support '${presence}' presence.`,
         );
     }
+  }
+
+  /**
+   * Status methods
+   */
+  protected checkStatusRequest(request: StatusRequest) {
+    if (request.contacts?.length > 0) {
+      const msg =
+        "WEBJS doesn't accept 'contacts'. Remove the field to send status to all contacts.";
+      throw new UnprocessableEntityException(msg);
+    }
+  }
+
+  public sendTextStatus(status: TextStatus) {
+    this.checkStatusRequest(status);
+    return this.whatsapp.sendTextStatus(status);
   }
 
   /**

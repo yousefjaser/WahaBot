@@ -1,6 +1,7 @@
 import { GetChatMessagesFilter } from '@waha/structures/chats.dto';
 import { Label } from '@waha/structures/labels.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
+import { TextStatus } from '@waha/structures/status.dto';
 import * as lodash from 'lodash';
 import { Client } from 'whatsapp-web.js';
 import { Message } from 'whatsapp-web.js/src/structures';
@@ -99,6 +100,37 @@ export class WebjsClient extends Client {
     }, pagination);
 
     return chats.map((chat) => ChatFactory.create(this, chat));
+  }
+
+  async sendTextStatus(status: TextStatus) {
+    // Convert from hex to number
+    const waColor = 'FF' + status.backgroundColor.replace('#', '');
+    const color = parseInt(waColor, 16);
+
+    const textStatus = {
+      text: status.text,
+      color: color,
+      font: status.font,
+    };
+    const sentMsg = await this.pupPage.evaluate(async (status) => {
+      // @ts-ignore
+      await window.Store.SendStatus.sendStatusTextMsgAction(status);
+      // @ts-ignore
+      const meUser = window.Store.User.getMeUser();
+      // @ts-ignore
+      const myStatus = window.Store.Status.getModelsArray().findLast(
+        (x) => x.id == meUser,
+      );
+      if (!myStatus) {
+        return undefined;
+      }
+      // @ts-ignore
+      const msg = myStatus.msgs.last();
+      // @ts-ignore
+      return msg ? window.WWebJS.getMessageModel(msg) : undefined;
+    }, textStatus);
+
+    return sentMsg ? new Message(this, sentMsg) : undefined;
   }
 
   async getMessages(
