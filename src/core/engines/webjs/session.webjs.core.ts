@@ -998,6 +998,11 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     // Messages
     //
     this.whatsapp.on(Events.MESSAGE_RECEIVED, async (message) => {
+      // Check there's some listeners, because we download media during that process
+      if (this.events.listenerCount(WAHAEvents.MESSAGE) == 0) {
+        this.logger.trace('No listeners for messages, skipping...');
+        return;
+      }
       const payload = await this.processIncomingMessage(message);
       this.events.emit(WAHAEvents.MESSAGE, payload);
     });
@@ -1014,13 +1019,16 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       };
       this.events.emit(WAHAEvents.MESSAGE_REVOKED, body);
     });
-    //   case WAHAEvents.MESSAGE_REACTION:
     this.whatsapp.on('message_reaction', (message) => {
       const payload = this.processMessageReaction(message);
       this.events.emit(WAHAEvents.MESSAGE_REACTION, payload);
     });
-    //   case WAHAEvents.MESSAGE_ANY:
     this.whatsapp.on(Events.MESSAGE_CREATE, async (message) => {
+      // Check there's some listeners, because we download media during that process
+      if (this.events.listenerCount(WAHAEvents.MESSAGE_ANY) == 0) {
+        this.logger.trace('No listeners for messages, skipping...');
+        return;
+      }
       const payload = await this.processIncomingMessage(message);
       this.events.emit(WAHAEvents.MESSAGE_ANY, payload);
     });

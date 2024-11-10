@@ -1237,6 +1237,15 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     // Messages
     //
     this.sock.ev.on('messages.upsert', async ({ messages }) => {
+      // Check there's some listeners, because we download media during that process
+      if (
+        this.events.listenerCount(WAHAEvents.MESSAGE) == 0 &&
+        this.events.listenerCount(WAHAEvents.MESSAGE_ANY) == 0
+      ) {
+        this.logger.trace('No listeners for messages, skipping...');
+        return;
+      }
+
       for (const message of messages) {
         const payload = await this.processIncomingMessage(message);
         if (!message.key.fromMe) {
