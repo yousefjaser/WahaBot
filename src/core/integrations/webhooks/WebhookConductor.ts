@@ -1,4 +1,4 @@
-import { WAHAInternalEvent, WhatsappSession } from '@waha/core/abc/session.abc';
+import { WhatsappSession } from '@waha/core/abc/session.abc';
 import { WebhookSender } from '@waha/core/integrations/webhooks/WebhookSender';
 import { WAHAEvents } from '@waha/structures/enums.dto';
 import { WebhookConfig } from '@waha/structures/webhooks.config.dto';
@@ -59,51 +59,12 @@ export class WebhookConductor {
     const events = this.getSuitableEvents(webhook.events);
     const sender = this.buildSender(webhook);
     for (const event of events) {
-      const found = this.configureSingleEvent(
-        session.subscribeSessionEvent,
-        session,
-        event,
-        sender,
-        url,
+      session.events.on(event, (data: any) =>
+        this.callWebhook(event, session, data, sender),
       );
-
-      if (!found) {
-        // Postpone for ENGINE_START event and configure engine events
-        session.events.on(WAHAInternalEvent.ENGINE_START, () => {
-          const found = this.configureSingleEvent(
-            session.subscribeEngineEvent,
-            session,
-            event,
-            sender,
-            url,
-          );
-          if (!found) {
-            this.logger.error(
-              `Engine does not support webhook event: '${event}' for url '${url}'`,
-            );
-          }
-        });
-      }
+      this.logger.debug(`Event '${event}' is enabled for url: ${url}`);
     }
     this.logger.info(`Webhooks were configured for ${url}.`);
-  }
-
-  private configureSingleEvent(
-    subscribeMethod,
-    session: WhatsappSession,
-    event: WAHAEvents,
-    sender: WebhookSender,
-    url: string,
-  ) {
-    const found = subscribeMethod.apply(session, [
-      event,
-      (data: any) => this.callWebhook(event, session, data, sender),
-    ]);
-    if (!found) {
-      return false;
-    }
-    this.logger.debug(`Event '${event}' is enabled for url: ${url}`);
-    return true;
   }
 
   public async callWebhook(

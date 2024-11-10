@@ -122,7 +122,6 @@ import {
   ensureSuffix,
   getChannelInviteLink,
   isNewsletter,
-  WAHAInternalEvent,
   WhatsappSession,
 } from '../../abc/session.abc';
 import {
@@ -175,10 +174,6 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   protected engineLogger: BaileysLogger;
 
   private authNOWEBStore: any;
-
-  get listenConnectionEventsFromTheStart() {
-    return true;
-  }
 
   sock: ReturnType<typeof makeWASocket>;
   store: INowebStore;
@@ -286,27 +281,33 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return createAgentProxy(this.proxyConfig);
   }
 
-  async connectStore() {
-    this.logger.debug(`Connecting store...`);
-    if (!this.store) {
-      this.logger.debug(`Making a new store...`);
-      const storeEnabled = this.sessionConfig?.noweb?.store?.enabled || false;
-      if (storeEnabled) {
-        this.logger.debug('Using NowebPersistentStore');
-        const storage = this.storageFactory.createStorage(
-          this.sessionStore,
-          this.name,
-        );
-        this.store = new NowebPersistentStore(
-          this.loggerBuilder.child({ name: NowebPersistentStore.name }),
-          storage,
-        );
-        await this.store.init();
-      } else {
-        this.logger.debug('Using NowebInMemoryStore');
-        this.store = new NowebInMemoryStore();
-      }
+  private async ensureStore() {
+    if (this.store) {
+      return;
     }
+
+    this.logger.debug(`Making a new store...`);
+    const storeEnabled = this.sessionConfig?.noweb?.store?.enabled || false;
+    if (!storeEnabled) {
+      this.logger.debug('Using NowebInMemoryStore');
+      this.store = new NowebInMemoryStore();
+      return;
+    }
+
+    this.logger.debug('Using NowebPersistentStore');
+    const storage = this.storageFactory.createStorage(
+      this.sessionStore,
+      this.name,
+    );
+    this.store = new NowebPersistentStore(
+      this.loggerBuilder.child({ name: NowebPersistentStore.name }),
+      storage,
+    );
+    await this.store.init();
+  }
+
+  connectStore() {
+    this.logger.debug(`Connecting store...`);
     this.logger.debug(`Binding store to socket...`);
     this.store.bind(this.sock.ev, this.sock);
   }
@@ -321,17 +322,18 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.shouldRestart = true;
     // @ts-ignore
     this.sock?.ev?.removeAllListeners();
+
+    await this.ensureStore();
     this.sock = await this.makeSocket();
+
     this.issueMessageUpdateOnEdits();
     this.issuePresenceUpdateOnMessageUpsert();
     if (this.isDebugEnabled()) {
       this.listenEngineEventsInDebugMode();
     }
-    await this.connectStore();
-    if (this.listenConnectionEventsFromTheStart) {
-      this.listenConnectionEvents();
-      this.events.emit(WAHAInternalEvent.ENGINE_START);
-    }
+    this.connectStore();
+    this.listenConnectionEvents();
+    this.subscribeEngineEvents();
     this.enableAutoRestart();
   }
 
@@ -1230,177 +1232,164 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   /**
    * END - Methods for API
    */
-
-  subscribeEngineEvent(event, handler): boolean {
-    switch (event) {
-      case WAHAEvents.MESSAGE:
-        this.sock.ev.on('messages.upsert', ({ messages }) => {
-          this.handleIncomingMessages(messages, handler, false);
-        });
-        return true;
-      case WAHAEvents.MESSAGE_REACTION:
-        this.sock.ev.on('messages.upsert', ({ messages }) => {
-          const reactions = this.processMessageReaction(messages);
-          reactions.map(handler);
-        });
-        return true;
-      case WAHAEvents.MESSAGE_ANY:
-        this.sock.ev.on('messages.upsert', ({ messages }) =>
-          this.handleIncomingMessages(messages, handler, true),
-        );
-        return true;
-      case WAHAEvents.MESSAGE_ACK: // Direct message ack
-        this.sock.ev.on('messages.update', (events) => {
-          events
-            .filter(isMine)
-            .filter(isAckUpdateMessageEvent)
-            .map(this.convertMessageUpdateToMessageAck)
-            .forEach(handler);
-        });
-        // Group message ack
-        this.sock.ev.on('message-receipt.update', (events) => {
-          events
-            .filter(isMine)
-            .map(this.convertMessageReceiptUpdateToMessageAck)
-            .forEach(handler);
-        });
-        return true;
-      case WAHAEvents.STATE_CHANGE:
-        this.sock.ev.on('connection.update', handler);
-        return true;
-      case WAHAEvents.GROUP_JOIN:
-        this.sock.ev.on('groups.upsert', handler);
-        return true;
-      case WAHAEvents.PRESENCE_UPDATE:
-        this.sock.ev.on('presence.update', (data) =>
-          handler(this.toWahaPresences(data.id, data.presences)),
-        );
-        return true;
-      case WAHAEvents.POLL_VOTE:
-        this.sock.ev.on('messages.update', (events) => {
-          events.forEach((event) =>
-            this.handleMessagesUpdatePollVote(event, handler),
-          );
-        });
-        return true;
-      case WAHAEvents.POLL_VOTE_FAILED:
-        this.sock.ev.on('messages.upsert', ({ messages }) => {
-          messages.forEach((message) =>
-            this.handleMessageUpsertPollVoteFailed(message, handler),
-          );
-        });
-        return true;
-      case WAHAEvents.CALL_RECEIVED:
-        this.sock.ev.on('call', (calls: WACallEvent[]) => {
-          calls = lodash.filter(calls, { status: 'offer' });
-          for (const call of calls) {
-            const body = this.toCallData(call);
-            handler(body);
-          }
-        });
-        return true;
-      case WAHAEvents.CALL_ACCEPTED:
-        this.sock.ev.on('call', (calls: WACallEvent[]) => {
-          calls = lodash.filter(calls, { status: 'accept' });
-          for (const call of calls) {
-            const body = this.toCallData(call);
-            handler(body);
-          }
-        });
-        return true;
-      case WAHAEvents.CALL_REJECTED:
-        this.sock.ev.on('call', (calls: WACallEvent[]) => {
-          const acceptCalls = lodash.filter(calls, { status: 'accept' });
-          if (acceptCalls.length > 0) {
-            // We got two events when accepting calls - reject and accept
-            // Like for each device
-            // So if we see accepted call - ignore rejected
-            return;
-          }
-
-          calls = lodash.filter(calls, { status: 'reject' });
-          for (const call of calls) {
-            const body = this.toCallData(call);
-            if (body.isGroup == null) {
-              // We get two "reject" events, one with null property, ignore it
-              return;
-            }
-            handler(body);
-          }
-        });
-        return true;
-      case WAHAEvents.LABEL_UPSERT:
-        this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
-          if (data.deleted) {
-            return;
-          }
-          const body = this.toLabel(data);
-          handler(body);
-        });
-        return true;
-      case WAHAEvents.LABEL_DELETED:
-        this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
-          if (!data.deleted) {
-            return;
-          }
-          const body = this.toLabel(data);
-          handler(body);
-        });
-        return true;
-      case WAHAEvents.LABEL_CHAT_ADDED:
-        this.sock.ev.on('labels.association', async ({ association, type }) => {
-          if (type !== 'add') {
-            return;
-          }
-          if (association.type !== LabelAssociationType.Chat) {
-            return;
-          }
-          const labelData = await this.store.getLabelById(association.labelId);
-          const label = labelData ? this.toLabel(labelData) : null;
-          const body: LabelChatAssociation = {
-            labelId: association.labelId,
-            chatId: toCusFormat(association.chatId),
-            label: label,
-          };
-          handler(body);
-        });
-        return true;
-      case WAHAEvents.LABEL_CHAT_DELETED:
-        this.sock.ev.on('labels.association', async ({ association, type }) => {
-          if (type !== 'remove') {
-            return;
-          }
-          if (association.type !== LabelAssociationType.Chat) {
-            return;
-          }
-          const labelData = await this.store.getLabelById(association.labelId);
-          const label = labelData ? this.toLabel(labelData) : null;
-          const body: LabelChatAssociation = {
-            labelId: association.labelId,
-            chatId: toCusFormat(association.chatId),
-            label: label,
-          };
-          handler(body);
-        });
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  private handleIncomingMessages(messages, handler, includeFromMe) {
-    for (const message of messages) {
-      // Do not include my messages
-      if (!includeFromMe && message.key.fromMe) {
-        continue;
+  subscribeEngineEvents() {
+    //
+    // Messages
+    //
+    this.sock.ev.on('messages.upsert', async ({ messages }) => {
+      for (const message of messages) {
+        const payload = await this.processIncomingMessage(message);
+        if (!message.key.fromMe) {
+          this.events.emit(WAHAEvents.MESSAGE, payload);
+        }
+        this.events.emit(WAHAEvents.MESSAGE_ANY, payload);
       }
-      this.processIncomingMessage(message).then((msg) => {
-        if (!msg) {
+    });
+    // Message Reactions
+    this.sock.ev.on('messages.upsert', ({ messages }) => {
+      const reactions = this.processMessageReaction(messages);
+      for (const reaction of reactions) {
+        this.events.emit(WAHAEvents.MESSAGE_REACTION, reaction);
+      }
+    });
+    // Message Ack - direct messages
+    this.sock.ev.on('messages.update', (events) => {
+      events
+        .filter(isMine)
+        .filter(isAckUpdateMessageEvent)
+        .map(this.convertMessageUpdateToMessageAck)
+        .forEach((payload) =>
+          this.events.emit(WAHAEvents.MESSAGE_ACK, payload),
+        );
+    });
+    // Message Ack - groups
+    this.sock.ev.on('message-receipt.update', (events) => {
+      events
+        .filter(isMine)
+        .map(this.convertMessageReceiptUpdateToMessageAck)
+        .forEach((payload) =>
+          this.events.emit(WAHAEvents.MESSAGE_ACK, payload),
+        );
+    });
+
+    //
+    // Other
+    //
+    this.sock.ev.on('connection.update', (event) =>
+      this.events.emit(WAHAEvents.STATE_CHANGE, event),
+    );
+    this.sock.ev.on('groups.upsert', (event) =>
+      this.events.emit(WAHAEvents.GROUP_JOIN, event),
+    );
+    this.sock.ev.on('presence.update', (data) => {
+      this.events.emit(
+        WAHAEvents.PRESENCE_UPDATE,
+        this.toWahaPresences(data.id, data.presences),
+      );
+    });
+
+    //
+    // Poll votes
+    //
+    this.sock.ev.on('messages.update', async (messages) => {
+      for (const message of messages) {
+        const payload = await this.handleMessagesUpdatePollVote(message);
+        this.events.emit(WAHAEvents.POLL_VOTE, payload);
+      }
+    });
+    this.sock.ev.on('messages.upsert', ({ messages }) => {
+      for (const message of messages) {
+        const payload = this.handleMessageUpsertPollVoteFailed(message);
+        this.events.emit(WAHAEvents.POLL_VOTE_FAILED, payload);
+      }
+    });
+
+    //
+    // Calls
+    //
+    this.sock.ev.on('call', (calls: WACallEvent[]) => {
+      calls = lodash.filter(calls, { status: 'offer' });
+      for (const call of calls) {
+        const body = this.toCallData(call);
+        this.events.emit(WAHAEvents.CALL_RECEIVED, body);
+      }
+    });
+    this.sock.ev.on('call', (calls: WACallEvent[]) => {
+      calls = lodash.filter(calls, { status: 'accept' });
+      for (const call of calls) {
+        const body = this.toCallData(call);
+        this.events.emit(WAHAEvents.CALL_ACCEPTED, body);
+      }
+    });
+    this.sock.ev.on('call', (calls: WACallEvent[]) => {
+      const acceptCalls = lodash.filter(calls, { status: 'accept' });
+      if (acceptCalls.length > 0) {
+        // We got two events when accepting calls - reject and accept
+        // Like for each device
+        // So if we see accepted call - ignore rejected
+        return;
+      }
+
+      calls = lodash.filter(calls, { status: 'reject' });
+      for (const call of calls) {
+        const body = this.toCallData(call);
+        if (body.isGroup == null) {
+          // We get two "reject" events, one with null property, ignore it
           return;
         }
-        handler(msg);
-      });
-    }
+        this.events.emit(WAHAEvents.CALL_REJECTED, body);
+      }
+    });
+
+    //
+    // Labels
+    //
+    this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
+      if (data.deleted) {
+        return;
+      }
+      const body = this.toLabel(data);
+      this.events.emit(WAHAEvents.LABEL_UPSERT, body);
+    });
+    this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
+      if (!data.deleted) {
+        return;
+      }
+      const body = this.toLabel(data);
+      this.events.emit(WAHAEvents.LABEL_DELETED, body);
+    });
+    this.sock.ev.on('labels.association', async ({ association, type }) => {
+      if (type !== 'add') {
+        return;
+      }
+      if (association.type !== LabelAssociationType.Chat) {
+        return;
+      }
+      const labelData = await this.store.getLabelById(association.labelId);
+      const label = labelData ? this.toLabel(labelData) : null;
+      const body: LabelChatAssociation = {
+        labelId: association.labelId,
+        chatId: toCusFormat(association.chatId),
+        label: label,
+      };
+      this.events.emit(WAHAEvents.LABEL_CHAT_ADDED, body);
+    });
+    this.sock.ev.on('labels.association', async ({ association, type }) => {
+      if (type !== 'remove') {
+        return;
+      }
+      if (association.type !== LabelAssociationType.Chat) {
+        return;
+      }
+      const labelData = await this.store.getLabelById(association.labelId);
+      const label = labelData ? this.toLabel(labelData) : null;
+      const body: LabelChatAssociation = {
+        labelId: association.labelId,
+        chatId: toCusFormat(association.chatId),
+        label: label,
+      };
+      this.events.emit(WAHAEvents.LABEL_CHAT_DELETED, body);
+    });
   }
 
   private processMessageReaction(messages: any[]): WAMessageReaction[] {
@@ -1577,7 +1566,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return body;
   }
 
-  protected async handleMessagesUpdatePollVote(event, handler) {
+  protected async handleMessagesUpdatePollVote(event) {
     const { key, update } = event;
     const pollUpdates = update?.pollUpdates;
     if (!pollUpdates) {
@@ -1614,11 +1603,11 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         vote: pollVote,
         poll: getDestination(pollCreationMessageKey),
       };
-      handler(payload);
+      return payload;
     }
   }
 
-  protected async handleMessageUpsertPollVoteFailed(message, handler) {
+  protected async handleMessageUpsertPollVoteFailed(message) {
     const pollUpdateMessage = message.message?.pollUpdateMessage;
     if (!pollUpdateMessage) {
       return;
@@ -1646,7 +1635,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       vote: pollVote,
       poll: getDestination(pollCreationMessageKey),
     };
-    handler(payload);
+    return payload;
   }
 
   private toCallData(call: WACallEvent): CallData {

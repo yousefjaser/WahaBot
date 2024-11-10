@@ -1,10 +1,8 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import {
   getChannelInviteLink,
-  WAHAInternalEvent,
   WhatsappSession,
 } from '@waha/core/abc/session.abc';
-import { toJID } from '@waha/core/engines/noweb/session.noweb.core';
 import { LocalAuth } from '@waha/core/engines/webjs/LocalAuth';
 import { WebjsClient } from '@waha/core/engines/webjs/WebjsClient';
 import {
@@ -244,7 +242,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       this.listenEngineEventsInDebugMode();
     }
     this.listenConnectionEvents();
-    this.events.emit(WAHAInternalEvent.ENGINE_START);
+    this.subscribeEngineEvents();
   }
 
   async start() {
@@ -995,84 +993,81 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
    * END - Methods for API
    */
 
-  subscribeEngineEvent(event, handler): boolean {
-    switch (event) {
-      case WAHAEvents.MESSAGE:
-        this.whatsapp.on(Events.MESSAGE_RECEIVED, (message) =>
-          this.processIncomingMessage(message).then(handler),
-        );
-        return true;
-      case WAHAEvents.MESSAGE_WAITING:
-        this.whatsapp.on(Events.MESSAGE_CIPHERTEXT, (message) =>
-          this.processIncomingMessage(message).then(handler),
-        );
-        return true;
-      case WAHAEvents.MESSAGE_REVOKED:
-        this.whatsapp.on(
-          Events.MESSAGE_REVOKED_EVERYONE,
-          async (after, before) => {
-            const afterMessage = after ? await this.toWAMessage(after) : null;
-            const beforeMessage = before
-              ? await this.toWAMessage(before)
-              : null;
-            const body: WAMessageRevokedBody = {
-              after: afterMessage,
-              before: beforeMessage,
-            };
-            handler(body);
-          },
-        );
-        return true;
-      case WAHAEvents.MESSAGE_REACTION:
-        this.whatsapp.on('message_reaction', (message) =>
-          handler(this.processMessageReaction(message)),
-        );
-        return true;
-      case WAHAEvents.MESSAGE_ANY:
-        this.whatsapp.on(Events.MESSAGE_CREATE, (message) =>
-          this.processIncomingMessage(message).then(handler),
-        );
-        return true;
-      case WAHAEvents.STATE_CHANGE:
-        this.whatsapp.on(Events.STATE_CHANGED, handler);
-        return true;
-      case WAHAEvents.MESSAGE_ACK:
-        // We do not download media here
-        this.whatsapp.on(Events.MESSAGE_ACK, (message) =>
-          this.toWAMessage(message).then(handler),
-        );
-        return true;
-      case WAHAEvents.GROUP_JOIN:
-        this.whatsapp.on(Events.GROUP_JOIN, handler);
-        return true;
-      case WAHAEvents.GROUP_LEAVE:
-        this.whatsapp.on(Events.GROUP_LEAVE, handler);
-        return true;
-      case WAHAEvents.CHAT_ARCHIVE:
-        this.whatsapp.on('chat_archived', (chat, archived, _) => {
-          const body: ChatArchiveEvent = {
-            id: chat.id._serialized,
-            archived: archived,
-            timestamp: chat.timestamp,
-          };
-          handler(body);
-        });
-        return true;
-      case WAHAEvents.CALL_RECEIVED:
-        this.whatsapp.on('call', (call: Call) => {
-          const body: CallData = {
-            id: call.id,
-            from: call.from,
-            timestamp: call.timestamp,
-            isVideo: call.isVideo,
-            isGroup: call.isGroup,
-          };
-          handler(body);
-        });
-        return true;
-      default:
-        return false;
-    }
+  subscribeEngineEvents() {
+    //
+    // Messages
+    //
+    this.whatsapp.on(Events.MESSAGE_RECEIVED, async (message) => {
+      const payload = await this.processIncomingMessage(message);
+      this.events.emit(WAHAEvents.MESSAGE, payload);
+    });
+    this.whatsapp.on(Events.MESSAGE_CIPHERTEXT, async (message) => {
+      const payload = await this.processIncomingMessage(message);
+      this.events.emit(WAHAEvents.MESSAGE_WAITING, payload);
+    });
+    this.whatsapp.on(Events.MESSAGE_REVOKED_EVERYONE, async (after, before) => {
+      const afterMessage = after ? await this.toWAMessage(after) : null;
+      const beforeMessage = before ? await this.toWAMessage(before) : null;
+      const body: WAMessageRevokedBody = {
+        after: afterMessage,
+        before: beforeMessage,
+      };
+      this.events.emit(WAHAEvents.MESSAGE_REVOKED, body);
+    });
+    //   case WAHAEvents.MESSAGE_REACTION:
+    this.whatsapp.on('message_reaction', (message) => {
+      const payload = this.processMessageReaction(message);
+      this.events.emit(WAHAEvents.MESSAGE_REACTION, payload);
+    });
+    //   case WAHAEvents.MESSAGE_ANY:
+    this.whatsapp.on(Events.MESSAGE_CREATE, async (message) => {
+      const payload = await this.processIncomingMessage(message);
+      this.events.emit(WAHAEvents.MESSAGE_ANY, payload);
+    });
+    this.whatsapp.on(Events.STATE_CHANGED, (event) => {
+      this.events.emit(WAHAEvents.STATE_CHANGE, event);
+    });
+    this.whatsapp.on(Events.MESSAGE_ACK, (message) => {
+      // We do not download media here
+      const payload = this.toWAMessage(message);
+      this.events.emit(WAHAEvents.MESSAGE_ACK, payload);
+    });
+
+    //
+    // Groups
+    //
+    this.whatsapp.on(Events.GROUP_JOIN, (event) => {
+      this.events.emit(WAHAEvents.GROUP_JOIN, event);
+    });
+    this.whatsapp.on(Events.GROUP_LEAVE, (event) => {
+      this.events.emit(WAHAEvents.GROUP_LEAVE, event);
+    });
+
+    //
+    // Chats
+    //
+    this.whatsapp.on('chat_archived', (chat, archived, _) => {
+      const body: ChatArchiveEvent = {
+        id: chat.id._serialized,
+        archived: archived,
+        timestamp: chat.timestamp,
+      };
+      this.events.emit(WAHAEvents.CHAT_ARCHIVE, body);
+    });
+
+    //
+    // Calls
+    //
+    this.whatsapp.on('call', (call: Call) => {
+      const body: CallData = {
+        id: call.id,
+        from: call.from,
+        timestamp: call.timestamp,
+        isVideo: call.isVideo,
+        isGroup: call.isGroup,
+      };
+      this.events.emit(WAHAEvents.CALL_RECEIVED, body);
+    });
   }
 
   private async processIncomingMessage(message: Message, downloadMedia = true) {

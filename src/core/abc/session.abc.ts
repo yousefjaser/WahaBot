@@ -88,10 +88,6 @@ export function ensureSuffix(phone) {
   return phone + suffix;
 }
 
-export enum WAHAInternalEvent {
-  ENGINE_START = 'engine.start',
-}
-
 export interface SessionParams {
   name: string;
   printQR: boolean;
@@ -227,25 +223,6 @@ export abstract class WhatsappSession {
   async unpair(): Promise<void> {
     return;
   }
-
-  /** Subscribe the handler to specific hook */
-  subscribeSessionEvent(
-    hook: WAHAEvents | string,
-    handler: (message) => void,
-  ): boolean {
-    switch (hook) {
-      case WAHAEvents.SESSION_STATUS:
-        this.events.on(WAHAEvents.SESSION_STATUS, handler);
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  abstract subscribeEngineEvent(
-    hook: WAHAEvents | string,
-    handler: (message) => void,
-  ): boolean;
 
   /**
    * START - Methods for API
