@@ -3,15 +3,18 @@ import { WebhookSender } from '@waha/core/integrations/webhooks/WebhookSender';
 import { WAHAEvents } from '@waha/structures/enums.dto';
 import { WebhookConfig } from '@waha/structures/webhooks.config.dto';
 import { WAHAWebhook } from '@waha/structures/webhooks.dto';
+import { EventWildUnmask } from '@waha/utils/events';
 import { LoggerBuilder } from '@waha/utils/logging';
 import { VERSION } from '@waha/version';
 import { Logger } from 'pino';
 
 export class WebhookConductor {
   private logger: Logger;
+  private eventUnmask: EventWildUnmask;
 
   constructor(protected loggerBuilder: LoggerBuilder) {
     this.logger = loggerBuilder.child({ name: WebhookConductor.name });
+    this.eventUnmask = new EventWildUnmask(WAHAEvents);
   }
 
   protected buildSender(webhookConfig: WebhookConfig): WebhookSender {
@@ -19,25 +22,7 @@ export class WebhookConductor {
   }
 
   private getSuitableEvents(events: WAHAEvents[] | string[]): WAHAEvents[] {
-    const allEvents = Object.values(WAHAEvents);
-
-    // Enable all events if * in the events
-    // @ts-ignore
-    if (events.includes('*')) {
-      return allEvents;
-    }
-
-    // Get only known events, log and ignore others
-    const rightEvents = [];
-    for (const event of events) {
-      // @ts-ignore
-      if (!allEvents.includes(event)) {
-        this.logger.error(`Unknown event for webhook: '${event}'`);
-        continue;
-      }
-      rightEvents.push(event);
-    }
-    return rightEvents;
+    return this.eventUnmask.unmask(events);
   }
 
   public configure(session: WhatsappSession, webhooks: WebhookConfig[]) {
