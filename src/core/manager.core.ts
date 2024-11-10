@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { WebhookConductor } from '@waha/core/integrations/webhooks/WebhookConductor';
 import { MediaStorageFactory } from '@waha/core/media/MediaStorageFactory';
 import { getPinoLogLevel, LoggerBuilder } from '@waha/utils/logging';
 import { promiseTimeout, sleep } from '@waha/utils/promiseTimeout';
@@ -33,7 +34,6 @@ import { getProxyConfig } from './helpers.proxy';
 import { MediaManager } from './media/MediaManager';
 import { LocalSessionAuthRepository } from './storage/LocalSessionAuthRepository';
 import { LocalStoreCore } from './storage/LocalStoreCore';
-import { WebhookConductorCore } from './webhooks.core';
 
 export class OnlyDefaultSessionIsAllowed extends UnprocessableEntityException {
   constructor() {
@@ -59,8 +59,6 @@ export class SessionManagerCore extends SessionManager {
   private sessionConfig?: SessionConfig;
   DEFAULT = 'default';
 
-  // @ts-ignore
-  protected WebhookConductorClass = WebhookConductorCore;
   protected readonly EngineClass: typeof WhatsappSession;
 
   constructor(
@@ -153,7 +151,7 @@ export class SessionManagerCore extends SessionManager {
       loggerBuilder.child({ name: 'MediaManager' }),
     );
 
-    const webhook = new this.WebhookConductorClass(loggerBuilder);
+    const webhook = new WebhookConductor(loggerBuilder);
     const proxyConfig = this.getProxyConfig();
     const sessionConfig: SessionParams = {
       name,

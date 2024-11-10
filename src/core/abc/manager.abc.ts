@@ -25,7 +25,6 @@ import {
 import { ISessionAuthRepository } from '../storage/ISessionAuthRepository';
 import { ISessionConfigRepository } from '../storage/ISessionConfigRepository';
 import { WhatsappSession } from './session.abc';
-import { WebhookConductor } from './webhooks.abc';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AsyncLock = require('async-lock');
@@ -71,8 +70,6 @@ export abstract class SessionManager implements BeforeApplicationShutdown {
   protected abstract getEngine(engine: WAHAEngine): typeof WhatsappSession;
 
   protected abstract get EngineClass(): typeof WhatsappSession;
-
-  protected abstract get WebhookConductorClass(): typeof WebhookConductor;
 
   //
   // API Methods

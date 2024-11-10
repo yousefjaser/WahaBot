@@ -1,83 +1,13 @@
+import { WAHAInternalEvent, WhatsappSession } from '@waha/core/abc/session.abc';
+import { WebhookSender } from '@waha/core/integrations/webhooks/WebhookSender';
+import { WAHAEvents } from '@waha/structures/enums.dto';
+import { WebhookConfig } from '@waha/structures/webhooks.config.dto';
+import { WAHAWebhook } from '@waha/structures/webhooks.dto';
 import { LoggerBuilder } from '@waha/utils/logging';
-import Agent from 'agentkeepalive';
-import axios from 'axios';
-import { AxiosInstance } from 'axios';
+import { VERSION } from '@waha/version';
 import { Logger } from 'pino';
 
-import { WAHAEvents } from '../structures/enums.dto';
-import { WebhookConfig } from '../structures/webhooks.config.dto';
-import { WAHAWebhook } from '../structures/webhooks.dto';
-import { VERSION } from '../version';
-import { WAHAInternalEvent, WhatsappSession } from './abc/session.abc';
-import { WebhookConductor, WebhookSender } from './abc/webhooks.abc';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const HttpAgent = require('agentkeepalive');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const HttpsAgent = require('agentkeepalive').HttpsAgent;
-
-export class WebhookSenderCore extends WebhookSender {
-  protected static AGENTS = {
-    http: new HttpAgent({}),
-    https: new HttpsAgent({}),
-  };
-
-  protected axios: AxiosInstance;
-
-  constructor(loggerBuilder: LoggerBuilder, webhookConfig: WebhookConfig) {
-    super(loggerBuilder, webhookConfig);
-    this.axios = this.buildAxiosInstance();
-  }
-
-  protected buildAxiosInstance() {
-    const headers = {
-      'content-type': 'application/json',
-      'User-Agent': `WAHA/${VERSION.version}`,
-    };
-    return axios.create({
-      headers: headers,
-      httpAgent: WebhookSenderCore.AGENTS.http,
-      httpsAgent: WebhookSenderCore.AGENTS.https,
-    });
-  }
-
-  send(json: any, headers?: Record<string, string>) {
-    headers = headers || {};
-    this.logger.info(
-      { id: headers['X-Webhook-Request-Id'], url: this.url },
-      `Sending POST...`,
-    );
-    this.logger.debug(
-      { id: headers['X-Webhook-Request-Id'], data: json },
-      `POST DATA`,
-    );
-
-    this.axios
-      .post(this.url, json, { headers: headers })
-      .then((response) => {
-        this.logger.info(
-          { id: headers['X-Webhook-Request-Id'] },
-          `POST request was sent with status code: ${response.status}`,
-        );
-        this.logger.debug(
-          { id: headers['X-Webhook-Request-Id'], body: response.data },
-          `Response`,
-        );
-      })
-      .catch((error) => {
-        this.logger.error(
-          {
-            id: headers['X-Webhook-Request-Id'],
-            error: error.message,
-            data: error.response?.data,
-          },
-          `POST request failed: ${error.message}`,
-        );
-      });
-  }
-}
-
-export class WebhookConductorCore implements WebhookConductor {
+export class WebhookConductor {
   private logger: Logger;
 
   constructor(protected loggerBuilder: LoggerBuilder) {
@@ -85,7 +15,7 @@ export class WebhookConductorCore implements WebhookConductor {
   }
 
   protected buildSender(webhookConfig: WebhookConfig): WebhookSender {
-    return new WebhookSenderCore(this.loggerBuilder, webhookConfig);
+    return new WebhookSender(this.loggerBuilder, webhookConfig);
   }
 
   private getSuitableEvents(events: WAHAEvents[] | string[]): WAHAEvents[] {
