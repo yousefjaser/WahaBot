@@ -141,7 +141,7 @@ export class SessionManagerCore extends SessionManager {
         `Session '${this.DEFAULT}' is already started.`,
       );
     }
-    this.log.info(`'${name}' - starting session...`);
+    this.log.info({ session: name }, `Starting session...`);
     const logger = this.log.logger.child({ session: name });
     logger.level = getPinoLogLevel(this.sessionConfig?.debug);
     const loggerBuilder: LoggerBuilder = logger;
@@ -208,11 +208,11 @@ export class SessionManagerCore extends SessionManager {
   async stop(name: string, silent: boolean): Promise<void> {
     this.onlyDefault(name);
     if (!this.isRunning(name)) {
-      this.log.debug(`Session is not running.`, { session: name });
+      this.log.debug({ session: name }, `Session is not running.`);
       return;
     }
 
-    this.log.info(`Stopping session...`, { session: name });
+    this.log.info({ session: name }, `Stopping session...`);
     try {
       const session = this.getSession(name);
       await session.stop();
@@ -222,7 +222,7 @@ export class SessionManagerCore extends SessionManager {
         throw err;
       }
     }
-    this.log.info(`Session has been stopped.`, { session: name });
+    this.log.info({ session: name }, `Session has been stopped.`);
     this.session = DefaultSessionStatus.STOPPED;
     this.updateSession();
     await sleep(this.SESSION_STOP_TIMEOUT);
@@ -234,7 +234,7 @@ export class SessionManagerCore extends SessionManager {
     }
     const session = this.session as WhatsappSession;
 
-    this.log.info('Unpairing the device from account...', { session: name });
+    this.log.info({ session: name }, 'Unpairing the device from account...');
     await session.unpair().catch((err) => {
       this.log.warn(`Error while unpairing from device: ${err}`);
     });

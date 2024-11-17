@@ -68,37 +68,24 @@ export class WebhookSender {
     };
     Object.assign(headers, this.getWebhookHeader());
     Object.assign(headers, this.getHMACHeaders(body));
-    this.logger.info(
-      {
-        id: headers['X-Webhook-Request-Id'],
-        ['event.id']: json.id,
-        url: this.url,
-      },
-      `Sending POST...`,
-    );
-    this.logger.debug(
-      {
-        id: headers['X-Webhook-Request-Id'],
-        data: json,
-        ['event.id']: json.id,
-      },
-      `POST DATA`,
-    );
+    const ctx = {
+      id: headers['X-Webhook-Request-Id'],
+      ['event.id']: json.id,
+      url: this.url,
+    };
+    this.logger.info(ctx, `Sending POST...`);
+    this.logger.debug(ctx, `POST DATA`);
 
     this.axios
       .post(this.url, body, { headers: headers })
       .then((response) => {
         this.logger.info(
-          {
-            id: headers['X-Webhook-Request-Id'],
-            ['event.id']: json.id,
-          },
+          ctx,
           `POST request was sent with status code: ${response.status}`,
         );
         this.logger.debug(
           {
-            id: headers['X-Webhook-Request-Id'],
-            ['event.id']: json.id,
+            ...ctx,
             body: response.data,
           },
           `Response`,
@@ -107,8 +94,7 @@ export class WebhookSender {
       .catch((error) => {
         this.logger.error(
           {
-            id: headers['X-Webhook-Request-Id'],
-            ['event.id']: json.id,
+            ...ctx,
             error: error.message,
             data: error.response?.data,
           },
