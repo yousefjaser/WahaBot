@@ -54,12 +54,7 @@ export class WebsocketGatewayCore
     const id = generatePrefixedId('wsc');
     socket.id = id;
     this.logger.debug(`New client connected: ${request.url}`);
-    const params = this.getParams(id, request, socket);
-    if (!params) {
-      const error = "Invalid parameters. Provide 'session' and 'events' params";
-      socket.close(4001, JSON.stringify({ error }));
-      return;
-    }
+    const params = this.getParams(request);
     const session: string = params.session;
     const events: WAHAEvents[] = params.events;
     this.logger.debug(
@@ -78,7 +73,7 @@ export class WebsocketGatewayCore
     });
   }
 
-  private getParams(id: string, request: IncomingMessage, socket: WebSocket) {
+  private getParams(request: IncomingMessage) {
     const query = url.parse(request.url, true).query;
     const session = (query.session as string) || '*';
     let paramsEvents = (query.events as string[]) || '*';
