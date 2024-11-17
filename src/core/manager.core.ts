@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { WebhookConductor } from '@waha/core/integrations/webhooks/WebhookConductor';
 import { MediaStorageFactory } from '@waha/core/media/MediaStorageFactory';
+import { DefaultMap } from '@waha/utils/DefaultMap';
 import { getPinoLogLevel, LoggerBuilder } from '@waha/utils/logging';
 import { promiseTimeout, sleep } from '@waha/utils/promiseTimeout';
-import { EventEmitter } from 'events';
+import { complete } from '@waha/utils/reactive/complete';
+import { SwitchObservable } from '@waha/utils/reactive/SwitchObservable';
 import { PinoLogger } from 'nestjs-pino';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { WhatsappConfigService } from '../config.service';
 import {
@@ -24,7 +28,7 @@ import {
   SessionInfo,
 } from '../structures/sessions.dto';
 import { WebhookConfig } from '../structures/webhooks.config.dto';
-import { SessionManager } from './abc/manager.abc';
+import { populateSessionInfo, SessionManager } from './abc/manager.abc';
 import { SessionParams, WhatsappSession } from './abc/session.abc';
 import { EngineConfigService } from './config/EngineConfigService';
 import { WhatsappSessionNoWebCore } from './engines/noweb/session.noweb.core';
@@ -60,6 +64,7 @@ export class SessionManagerCore extends SessionManager {
   DEFAULT = 'default';
 
   protected readonly EngineClass: typeof WhatsappSession;
+  protected events2: DefaultMap<WAHAEvents, SwitchObservable<any>>;
 
   constructor(
     config: WhatsappConfigService,
@@ -68,7 +73,6 @@ export class SessionManagerCore extends SessionManager {
     private mediaStorageFactory: MediaStorageFactory,
   ) {
     super(config, log);
-    this.events = new EventEmitter();
     this.session = DefaultSessionStatus.STOPPED;
     this.sessionConfig = null;
     const engineName = this.engineConfigService.getDefaultEngineName();
@@ -98,6 +102,7 @@ export class SessionManagerCore extends SessionManager {
   }
 
   async beforeApplicationShutdown(signal?: string) {
+    this.stopEvents();
     if (!this.session) {
       return;
     }
@@ -166,16 +171,11 @@ export class SessionManagerCore extends SessionManager {
     // @ts-ignore
     const session = new this.EngineClass(sessionConfig);
     this.session = session;
+    this.updateSession();
 
     // configure webhooks
     const webhooks = this.getWebhooks();
     webhook.configure(session, webhooks);
-
-    // configure events
-    session.events.on(
-      WAHAEvents.SESSION_STATUS,
-      this.handleSessionEvent(WAHAEvents.SESSION_STATUS, session),
-    );
 
     // start session
     await session.start();
@@ -185,6 +185,24 @@ export class SessionManagerCore extends SessionManager {
       status: session.status,
       config: session.sessionConfig,
     };
+  }
+
+  private updateSession() {
+    if (!this.session) {
+      return;
+    }
+    const session: WhatsappSession = this.session as WhatsappSession;
+    for (const eventName in WAHAEvents) {
+      const event = WAHAEvents[eventName];
+      const stream$ = session
+        .getEventObservable(event)
+        .pipe(map(populateSessionInfo(event, session)));
+      this.events2.get(event).switch(stream$);
+    }
+  }
+
+  getSessionEvent(session: string, event: WAHAEvents): Observable<any> {
+    return this.events2.get(event);
   }
 
   async stop(name: string, silent: boolean): Promise<void> {
@@ -206,6 +224,7 @@ export class SessionManagerCore extends SessionManager {
     }
     this.log.info(`Session has been stopped.`, { session: name });
     this.session = DefaultSessionStatus.STOPPED;
+    this.updateSession();
     await sleep(this.SESSION_STOP_TIMEOUT);
   }
 
@@ -230,6 +249,7 @@ export class SessionManagerCore extends SessionManager {
   async delete(name: string): Promise<void> {
     this.onlyDefault(name);
     this.session = DefaultSessionStatus.REMOVED;
+    this.updateSession();
     this.sessionConfig = undefined;
   }
 
@@ -336,5 +356,9 @@ export class SessionManagerCore extends SessionManager {
     const session = sessions[0];
     const engine = await this.fetchEngineInfo();
     return { ...session, engine: engine };
+  }
+
+  protected stopEvents() {
+    complete(this.events2);
   }
 }

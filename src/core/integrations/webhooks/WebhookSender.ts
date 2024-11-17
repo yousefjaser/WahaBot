@@ -9,7 +9,7 @@ import axios, { AxiosInstance } from 'axios';
 import axiosRetry, { retryAfter } from 'axios-retry';
 import * as crypto from 'crypto';
 import { Logger } from 'pino';
-import { v4 as uuid4 } from 'uuid';
+import { ulid } from 'ulid';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const HttpAgent = require('agentkeepalive');
@@ -69,11 +69,19 @@ export class WebhookSender {
     Object.assign(headers, this.getWebhookHeader());
     Object.assign(headers, this.getHMACHeaders(body));
     this.logger.info(
-      { id: headers['X-Webhook-Request-Id'], url: this.url },
+      {
+        id: headers['X-Webhook-Request-Id'],
+        ['event.id']: json.id,
+        url: this.url,
+      },
       `Sending POST...`,
     );
     this.logger.debug(
-      { id: headers['X-Webhook-Request-Id'], data: json },
+      {
+        id: headers['X-Webhook-Request-Id'],
+        data: json,
+        ['event.id']: json.id,
+      },
       `POST DATA`,
     );
 
@@ -81,11 +89,18 @@ export class WebhookSender {
       .post(this.url, body, { headers: headers })
       .then((response) => {
         this.logger.info(
-          { id: headers['X-Webhook-Request-Id'] },
+          {
+            id: headers['X-Webhook-Request-Id'],
+            ['event.id']: json.id,
+          },
           `POST request was sent with status code: ${response.status}`,
         );
         this.logger.debug(
-          { id: headers['X-Webhook-Request-Id'], body: response.data },
+          {
+            id: headers['X-Webhook-Request-Id'],
+            ['event.id']: json.id,
+            body: response.data,
+          },
           `Response`,
         );
       })
@@ -93,6 +108,7 @@ export class WebhookSender {
         this.logger.error(
           {
             id: headers['X-Webhook-Request-Id'],
+            ['event.id']: json.id,
             error: error.message,
             data: error.response?.data,
           },
@@ -154,7 +170,7 @@ export class WebhookSender {
   protected getWebhookHeader() {
     return {
       // UUID, no '-' in it
-      'X-Webhook-Request-Id': uuid4().replace(/-/g, ''),
+      'X-Webhook-Request-Id': ulid(),
       // unix timestamp with ms
       'X-Webhook-Timestamp': Date.now().toString(),
     };

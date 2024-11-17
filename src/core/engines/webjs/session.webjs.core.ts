@@ -68,10 +68,15 @@ import {
   StatusRequest,
   TextStatus,
 } from '@waha/structures/status.dto';
-import { WAMessageRevokedBody } from '@waha/structures/webhooks.dto';
+import {
+  EnginePayload,
+  WAMessageRevokedBody,
+} from '@waha/structures/webhooks.dto';
 import { PaginatorInMemory } from '@waha/utils/Paginator';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
 import { SingleDelayedJobRunner } from '@waha/utils/SingleDelayedJobRunner';
+import { fromEvent, merge, mergeMap, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
   Call,
   Channel as WEBJSChannel,
@@ -242,7 +247,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       this.listenEngineEventsInDebugMode();
     }
     this.listenConnectionEvents();
-    this.subscribeEngineEvents();
+    this.subscribeEngineEvents2();
   }
 
   async start() {
@@ -258,7 +263,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   async stop() {
     this.shouldRestart = false;
     this.status = WAHASessionStatus.STOPPED;
-    this.events.removeAllListeners();
+    this.stopEvents();
     this.startDelayedJob.cancel();
     await this.end();
   }
@@ -992,90 +997,146 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   /**
    * END - Methods for API
    */
+  subscribeEngineEvents2() {
+    //
+    // All
+    //
+    const events: Observable<EnginePayload>[] = [];
+    for (const key in Events) {
+      const event = Events[key];
+      const event$ = fromEvent(this.whatsapp, event);
+      events.push(
+        event$.pipe(
+          map((data) => {
+            return {
+              event: event,
+              data: data,
+            };
+          }),
+        ),
+      );
+    }
+    const all$ = merge(...events);
+    this.events2.get(WAHAEvents.ENGINE_EVENT).switch(all$);
 
-  subscribeEngineEvents() {
     //
     // Messages
     //
-    this.whatsapp.on(Events.MESSAGE_RECEIVED, async (message) => {
-      // Check there's some listeners, because we download media during that process
-      if (this.events.listenerCount(WAHAEvents.MESSAGE) == 0) {
-        this.logger.trace('No listeners for messages, skipping...');
-        return;
-      }
-      const payload = await this.processIncomingMessage(message);
-      this.events.emit(WAHAEvents.MESSAGE, payload);
-    });
-    this.whatsapp.on(Events.MESSAGE_CIPHERTEXT, async (message) => {
-      const payload = await this.processIncomingMessage(message);
-      this.events.emit(WAHAEvents.MESSAGE_WAITING, payload);
-    });
-    this.whatsapp.on(Events.MESSAGE_REVOKED_EVERYONE, async (after, before) => {
-      const afterMessage = after ? await this.toWAMessage(after) : null;
-      const beforeMessage = before ? await this.toWAMessage(before) : null;
-      const body: WAMessageRevokedBody = {
-        after: afterMessage,
-        before: beforeMessage,
-      };
-      this.events.emit(WAHAEvents.MESSAGE_REVOKED, body);
-    });
-    this.whatsapp.on('message_reaction', (message) => {
-      const payload = this.processMessageReaction(message);
-      this.events.emit(WAHAEvents.MESSAGE_REACTION, payload);
-    });
-    this.whatsapp.on(Events.MESSAGE_CREATE, async (message) => {
-      // Check there's some listeners, because we download media during that process
-      if (this.events.listenerCount(WAHAEvents.MESSAGE_ANY) == 0) {
-        this.logger.trace('No listeners for messages, skipping...');
-        return;
-      }
-      const payload = await this.processIncomingMessage(message);
-      this.events.emit(WAHAEvents.MESSAGE_ANY, payload);
-    });
-    this.whatsapp.on(Events.STATE_CHANGED, (event) => {
-      this.events.emit(WAHAEvents.STATE_CHANGE, event);
-    });
-    this.whatsapp.on(Events.MESSAGE_ACK, (message) => {
-      // We do not download media here
-      const payload = this.toWAMessage(message);
-      this.events.emit(WAHAEvents.MESSAGE_ACK, payload);
-    });
+    const messageReceived$ = fromEvent(this.whatsapp, Events.MESSAGE_RECEIVED);
+    const messagesFromOthers$ = messageReceived$.pipe(
+      mergeMap((msg: any) => this.processIncomingMessage(msg, true)),
+    );
+    this.events2.get(WAHAEvents.MESSAGE).switch(messagesFromOthers$);
+
+    const messageCreate$ = fromEvent(this.whatsapp, Events.MESSAGE_CREATE);
+    const messagesFromAll$ = messageCreate$.pipe(
+      mergeMap((msg: any) => this.processIncomingMessage(msg, true)),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_ANY).switch(messagesFromAll$);
+
+    const messageCiphertext$ = fromEvent(
+      this.whatsapp,
+      Events.MESSAGE_CIPHERTEXT,
+    );
+    const messagesWaiting$ = messageCiphertext$.pipe(
+      mergeMap((msg: any) => this.processIncomingMessage(msg, true)),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_WAITING).switch(messagesWaiting$);
+
+    const messageRevoked$ = fromEvent(
+      this.whatsapp,
+      Events.MESSAGE_REVOKED_EVERYONE,
+      (after, before) => {
+        return { after, before };
+      },
+    );
+    const messagesRevoked$ = messageRevoked$.pipe(
+      map((event): WAMessageRevokedBody => {
+        const afterMessage = event.after ? this.toWAMessage(event.after) : null;
+        const beforeMessage = event.before
+          ? this.toWAMessage(event.before)
+          : null;
+        return {
+          after: afterMessage,
+          before: beforeMessage,
+        };
+      }),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_REVOKED).switch(messagesRevoked$);
+
+    const messageReaction$ = fromEvent(this.whatsapp, 'message_reaction');
+    const messagesReaction$ = messageReaction$.pipe(
+      map(this.processMessageReaction.bind(this)),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_REACTION).switch(messagesReaction$);
+
+    const messageAck$ = fromEvent(
+      this.whatsapp,
+      Events.MESSAGE_ACK,
+      (message, ack) => {
+        return { message, ack };
+      },
+    );
+    const messagesAck$ = messageAck$.pipe(
+      map((event) => event.message),
+      map(this.toWAMessage.bind(this)),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_ACK).switch(messagesAck$);
+
+    //
+    // Others
+    //
+    const stateChanged$ = fromEvent(this.whatsapp, Events.STATE_CHANGED);
+    this.events2.get(WAHAEvents.STATE_CHANGE).switch(stateChanged$);
 
     //
     // Groups
     //
-    this.whatsapp.on(Events.GROUP_JOIN, (event) => {
-      this.events.emit(WAHAEvents.GROUP_JOIN, event);
-    });
-    this.whatsapp.on(Events.GROUP_LEAVE, (event) => {
-      this.events.emit(WAHAEvents.GROUP_LEAVE, event);
-    });
+    const groupJoin$ = fromEvent(this.whatsapp, Events.GROUP_JOIN);
+    this.events2.get(WAHAEvents.GROUP_JOIN).switch(groupJoin$);
+    const groupLeave$ = fromEvent(this.whatsapp, Events.GROUP_LEAVE);
+    this.events2.get(WAHAEvents.GROUP_LEAVE).switch(groupLeave$);
 
     //
     // Chats
     //
-    this.whatsapp.on('chat_archived', (chat, archived, _) => {
-      const body: ChatArchiveEvent = {
-        id: chat.id._serialized,
-        archived: archived,
-        timestamp: chat.timestamp,
-      };
-      this.events.emit(WAHAEvents.CHAT_ARCHIVE, body);
-    });
+    const chatArchived$ = fromEvent(
+      this.whatsapp,
+      'chat_archived',
+      (chat, archived, _) => {
+        return {
+          chat: chat,
+          archived: archived,
+        };
+      },
+    );
+    const chatsArchived$ = chatArchived$.pipe(
+      map((event) => {
+        return {
+          id: event.chat.id._serialized,
+          archived: event.archived,
+          timestamp: event.chat.timestamp,
+        };
+      }),
+    );
+    this.events2.get(WAHAEvents.CHAT_ARCHIVE).switch(chatsArchived$);
 
     //
     // Calls
     //
-    this.whatsapp.on('call', (call: Call) => {
-      const body: CallData = {
-        id: call.id,
-        from: call.from,
-        timestamp: call.timestamp,
-        isVideo: call.isVideo,
-        isGroup: call.isGroup,
-      };
-      this.events.emit(WAHAEvents.CALL_RECEIVED, body);
-    });
+    const call$ = fromEvent(this.whatsapp, 'call');
+    const calls$ = call$.pipe(
+      map((call: Call) => {
+        return {
+          id: call.id,
+          from: call.from,
+          timestamp: call.timestamp,
+          isVideo: call.isVideo,
+          isGroup: call.isGroup,
+        };
+      }),
+    );
+    this.events2.get(WAHAEvents.CALL_RECEIVED).switch(calls$);
   }
 
   private async processIncomingMessage(message: Message, downloadMedia = true) {
@@ -1087,7 +1148,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
         this.logger.error(e, e.stack);
       }
     }
-    return await this.toWAMessage(message);
+    return this.toWAMessage(message);
   }
 
   private processMessageReaction(reaction: Reaction): WAMessageReaction {
@@ -1105,10 +1166,10 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     };
   }
 
-  protected toWAMessage(message: Message): Promise<WAMessage> {
+  protected toWAMessage(message: Message): WAMessage {
     const replyTo = this.extractReplyTo(message);
     // @ts-ignore
-    return Promise.resolve({
+    return {
       id: message.id._serialized,
       timestamp: message.timestamp,
       from: message.from,
@@ -1129,7 +1190,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       vCards: message.vCards,
       replyTo: replyTo,
       _data: message.rawData,
-    });
+    };
   }
 
   protected extractReplyTo(message: Message): ReplyToMessage | null {

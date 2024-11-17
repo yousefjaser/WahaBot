@@ -19,13 +19,20 @@ import makeWASocket, {
   proto,
   WAMessageContent,
   WAMessageKey,
+  WAMessageUpdate,
 } from '@adiwajshing/baileys';
 import { WACallEvent } from '@adiwajshing/baileys/lib/Types/Call';
+import { BaileysEventMap } from '@adiwajshing/baileys/lib/Types/Events';
+import { GroupMetadata } from '@adiwajshing/baileys/lib/Types/GroupMetadata';
 import {
   Label as NOWEBLabel,
   LabelActionBody,
 } from '@adiwajshing/baileys/lib/Types/Label';
-import { LabelAssociationType } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+import {
+  ChatLabelAssociation,
+  LabelAssociationType,
+} from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+import { MessageUserReceiptUpdate } from '@adiwajshing/baileys/lib/Types/Message';
 import { isLidUser } from '@adiwajshing/baileys/lib/WABinary/jid-utils';
 import { Logger as BaileysLogger } from '@adiwajshing/baileys/node_modules/pino';
 import { UnprocessableEntityException } from '@nestjs/common';
@@ -58,18 +65,33 @@ import {
 import { ReplyToMessage } from '@waha/structures/message.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import {
+  EnginePayload,
   PollVote,
   PollVotePayload,
   WAMessageAckBody,
 } from '@waha/structures/webhooks.dto';
 import { LoggerBuilder } from '@waha/utils/logging';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
+import { exclude } from '@waha/utils/reactive/ops/exclude';
 import { SingleDelayedJobRunner } from '@waha/utils/SingleDelayedJobRunner';
 import { SinglePeriodicJobRunner } from '@waha/utils/SinglePeriodicJobRunner';
 import * as Buffer from 'buffer';
 import { Agent } from 'https';
 import * as lodash from 'lodash';
 import * as NodeCache from 'node-cache';
+import {
+  filter,
+  fromEvent,
+  identity,
+  merge,
+  mergeAll,
+  mergeMap,
+  Observable,
+  partition,
+  share,
+  Subject,
+} from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   ChatRequest,
@@ -333,7 +355,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     }
     this.connectStore();
     this.listenConnectionEvents();
-    this.subscribeEngineEvents();
+    this.subscribeEngineEvents2();
     this.enableAutoRestart();
   }
 
@@ -441,7 +463,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       this.authNOWEBStore = null;
     }
     this.status = WAHASessionStatus.STOPPED;
-    this.events.removeAllListeners();
+    this.stopEvents();
 
     await this.end();
     await this.store?.close();
@@ -966,6 +988,18 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     };
   }
 
+  private async toLabelChatAssociation(
+    association: ChatLabelAssociation,
+  ): Promise<LabelChatAssociation> {
+    const labelData = await this.store.getLabelById(association.labelId);
+    const label = labelData ? this.toLabel(labelData) : null;
+    return {
+      labelId: association.labelId,
+      chatId: toCusFormat(association.chatId),
+      label: label,
+    };
+  }
+
   /**
    * Contacts methods
    */
@@ -1229,204 +1263,232 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return await this.sock.newsletterAction(id, 'unmute');
   }
 
-  /**
-   * END - Methods for API
-   */
-  subscribeEngineEvents() {
+  subscribeEngineEvents2() {
+    //
+    // All
+    //
+    const all$ = new Observable<EnginePayload>((subscriber) => {
+      return this.sock.ev.process((events) => {
+        // iterate over keys
+        for (const event in events) {
+          const data = events[event];
+          subscriber.next({ event: event, data: data });
+        }
+      });
+    });
+    this.events2.get(WAHAEvents.ENGINE_EVENT).switch(all$);
+
     //
     // Messages
     //
-    this.sock.ev.on('messages.upsert', async ({ messages }) => {
-      // Check there's some listeners, because we download media during that process
-      if (
-        this.events.listenerCount(WAHAEvents.MESSAGE) == 0 &&
-        this.events.listenerCount(WAHAEvents.MESSAGE_ANY) == 0
-      ) {
-        this.logger.trace('No listeners for messages, skipping...');
-        return;
-      }
+    const messagesUpsert$ = fromEvent(this.sock.ev, 'messages.upsert').pipe(
+      map((event: BaileysEventMap['messages.upsert']) => event.messages),
+      mergeAll(),
+    );
+    let [messagesFromMe$, messagesFromOthers$] = partition(
+      messagesUpsert$,
+      isMine,
+    );
+    messagesFromMe$ = messagesFromMe$.pipe(
+      mergeMap((msg) => this.processIncomingMessage(msg, true)),
+      share(), // share it so we don't process twice in message.any
+    );
+    messagesFromOthers$ = messagesFromOthers$.pipe(
+      mergeMap((msg) => this.processIncomingMessage(msg, true)),
+      share(), // share it so we don't process twice in message.any
+    );
+    const messagesFromAll$ = merge(messagesFromMe$, messagesFromOthers$);
+    this.events2.get(WAHAEvents.MESSAGE).switch(messagesFromOthers$);
+    this.events2.get(WAHAEvents.MESSAGE_ANY).switch(messagesFromAll$);
 
-      for (const message of messages) {
-        const payload = await this.processIncomingMessage(message);
-        if (!message.key.fromMe) {
-          this.events.emit(WAHAEvents.MESSAGE, payload);
-        }
-        this.events.emit(WAHAEvents.MESSAGE_ANY, payload);
-      }
-    });
+    //
     // Message Reactions
-    this.sock.ev.on('messages.upsert', ({ messages }) => {
-      const reactions = this.processMessageReaction(messages);
-      for (const reaction of reactions) {
-        this.events.emit(WAHAEvents.MESSAGE_REACTION, reaction);
-      }
-    });
-    // Message Ack - direct messages
-    this.sock.ev.on('messages.update', (events) => {
-      events
-        .filter(isMine)
-        .filter(isAckUpdateMessageEvent)
-        .map(this.convertMessageUpdateToMessageAck)
-        .forEach((payload) =>
-          this.events.emit(WAHAEvents.MESSAGE_ACK, payload),
-        );
-    });
-    // Message Ack - groups
-    this.sock.ev.on('message-receipt.update', (events) => {
-      events
-        .filter(isMine)
-        .map(this.convertMessageReceiptUpdateToMessageAck)
-        .forEach((payload) =>
-          this.events.emit(WAHAEvents.MESSAGE_ACK, payload),
-        );
-    });
+    //
+    const messageReactions$ = messagesUpsert$.pipe(
+      map(this.processMessageReaction.bind(this)),
+      filter(Boolean),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_REACTION).switch(messageReactions$);
+
+    //
+    // Message Ack
+    //
+    const messageUpdates$: Observable<WAMessageUpdate> = fromEvent(
+      this.sock.ev,
+      'messages.update',
+    ).pipe(
+      // @ts-ignore
+      mergeAll(),
+    );
+    const messageAckDirect$ = messageUpdates$.pipe(
+      filter(isMine), // ack comes only for MY messages
+      filter(isAckUpdateMessageEvent),
+      map(this.convertMessageUpdateToMessageAck.bind(this)),
+    );
+    const messageReceiptUpdate$: Observable<MessageUserReceiptUpdate> =
+      fromEvent(this.sock.ev, 'message-receipt.update').pipe(
+        // @ts-ignore
+        mergeAll(),
+      );
+
+    const messageAckGroups$ = messageReceiptUpdate$.pipe(
+      filter(isMine), // ack comes only for MY messages
+      map(this.convertMessageReceiptUpdateToMessageAck.bind(this)),
+    );
+    const messageAck$ = merge(messageAckDirect$, messageAckGroups$);
+    this.events2.get(WAHAEvents.MESSAGE_ACK).switch(messageAck$);
 
     //
     // Other
     //
-    this.sock.ev.on('connection.update', (event) =>
-      this.events.emit(WAHAEvents.STATE_CHANGE, event),
+    this.events2
+      .get(WAHAEvents.STATE_CHANGE)
+      .switch(fromEvent(this.sock.ev, 'connection.update'));
+    this.events2.get(WAHAEvents.GROUP_JOIN).switch(
+      // @ts-ignore
+      fromEvent<GroupMetadata[]>(this.sock.ev, 'groups.upsert').pipe(
+        mergeAll(),
+      ),
     );
-    this.sock.ev.on('groups.upsert', (event) =>
-      this.events.emit(WAHAEvents.GROUP_JOIN, event),
-    );
-    this.sock.ev.on('presence.update', (data) => {
-      this.events.emit(
-        WAHAEvents.PRESENCE_UPDATE,
-        this.toWahaPresences(data.id, data.presences),
+    this.events2
+      .get(WAHAEvents.PRESENCE_UPDATE)
+      .switch(
+        fromEvent(this.sock.ev, 'presence.update').pipe(
+          map((data: any) => this.toWahaPresences(data.id, data.presences)),
+        ),
       );
-    });
 
     //
     // Poll votes
     //
-    this.sock.ev.on('messages.update', async (messages) => {
-      for (const message of messages) {
-        const payload = await this.handleMessagesUpdatePollVote(message);
-        this.events.emit(WAHAEvents.POLL_VOTE, payload);
-      }
-    });
-    this.sock.ev.on('messages.upsert', ({ messages }) => {
-      for (const message of messages) {
-        const payload = this.handleMessageUpsertPollVoteFailed(message);
-        this.events.emit(WAHAEvents.POLL_VOTE_FAILED, payload);
-      }
-    });
+    this.events2
+      .get(WAHAEvents.POLL_VOTE)
+      .switch(
+        messageUpdates$.pipe(
+          mergeMap(this.handleMessagesUpdatePollVote.bind(this)),
+          filter(Boolean),
+        ),
+      );
+    this.events2
+      .get(WAHAEvents.POLL_VOTE_FAILED)
+      .switch(
+        messagesUpsert$.pipe(
+          mergeMap(this.handleMessageUpsertPollVoteFailed.bind(this)),
+          filter(Boolean),
+        ),
+      );
 
     //
     // Calls
     //
-    this.sock.ev.on('call', (calls: WACallEvent[]) => {
-      calls = lodash.filter(calls, { status: 'offer' });
-      for (const call of calls) {
-        const body = this.toCallData(call);
-        this.events.emit(WAHAEvents.CALL_RECEIVED, body);
-      }
-    });
-    this.sock.ev.on('call', (calls: WACallEvent[]) => {
-      calls = lodash.filter(calls, { status: 'accept' });
-      for (const call of calls) {
-        const body = this.toCallData(call);
-        this.events.emit(WAHAEvents.CALL_ACCEPTED, body);
-      }
-    });
-    this.sock.ev.on('call', (calls: WACallEvent[]) => {
-      const acceptCalls = lodash.filter(calls, { status: 'accept' });
-      if (acceptCalls.length > 0) {
-        // We got two events when accepting calls - reject and accept
-        // Like for each device
-        // So if we see accepted call - ignore rejected
-        return;
-      }
-
-      calls = lodash.filter(calls, { status: 'reject' });
-      for (const call of calls) {
-        const body = this.toCallData(call);
-        if (body.isGroup == null) {
-          // We get two "reject" events, one with null property, ignore it
-          return;
-        }
-        this.events.emit(WAHAEvents.CALL_REJECTED, body);
-      }
-    });
+    // @ts-ignore
+    const calls$: Observable<WACallEvent[]> = fromEvent(this.sock.ev, 'call');
+    const call$ = calls$.pipe(mergeMap(identity));
+    this.events2.get(WAHAEvents.CALL_RECEIVED).switch(
+      call$.pipe(
+        filter((call: WACallEvent) => call.status === 'offer'),
+        map(this.toCallData.bind(this)),
+      ),
+    );
+    this.events2.get(WAHAEvents.CALL_ACCEPTED).switch(
+      call$.pipe(
+        filter((call: WACallEvent) => call.status === 'accept'),
+        map(this.toCallData.bind(this)),
+      ),
+    );
+    this.events2.get(WAHAEvents.CALL_REJECTED).switch(
+      calls$.pipe(
+        // Filter out if there's any "accept" events.
+        // Meaning it's been accepted on one device, but rejected on another
+        exclude((calls) => calls.some((call) => call.status === 'accept')),
+        mergeAll(),
+        filter((call: WACallEvent) => call.status === 'reject'),
+        // We get two "reject" events, one with null isGroup property, ignore it
+        exclude((call: WACallEvent) => call.isGroup == null),
+        map(this.toCallData.bind(this)),
+      ),
+    );
 
     //
     // Labels
     //
-    this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
-      if (data.deleted) {
-        return;
-      }
-      const body = this.toLabel(data);
-      this.events.emit(WAHAEvents.LABEL_UPSERT, body);
-    });
-    this.sock.ev.on('labels.edit', (data: NOWEBLabel) => {
-      if (!data.deleted) {
-        return;
-      }
-      const body = this.toLabel(data);
-      this.events.emit(WAHAEvents.LABEL_DELETED, body);
-    });
-    this.sock.ev.on('labels.association', async ({ association, type }) => {
-      if (type !== 'add') {
-        return;
-      }
-      if (association.type !== LabelAssociationType.Chat) {
-        return;
-      }
-      const labelData = await this.store.getLabelById(association.labelId);
-      const label = labelData ? this.toLabel(labelData) : null;
-      const body: LabelChatAssociation = {
-        labelId: association.labelId,
-        chatId: toCusFormat(association.chatId),
-        label: label,
-      };
-      this.events.emit(WAHAEvents.LABEL_CHAT_ADDED, body);
-    });
-    this.sock.ev.on('labels.association', async ({ association, type }) => {
-      if (type !== 'remove') {
-        return;
-      }
-      if (association.type !== LabelAssociationType.Chat) {
-        return;
-      }
-      const labelData = await this.store.getLabelById(association.labelId);
-      const label = labelData ? this.toLabel(labelData) : null;
-      const body: LabelChatAssociation = {
-        labelId: association.labelId,
-        chatId: toCusFormat(association.chatId),
-        label: label,
-      };
-      this.events.emit(WAHAEvents.LABEL_CHAT_DELETED, body);
-    });
+    // @ts-ignore
+    const labelsEdit$: Observable<NOWEBLabel> = fromEvent(
+      this.sock.ev,
+      'labels.edit',
+    );
+    this.events2.get(WAHAEvents.LABEL_UPSERT).switch(
+      labelsEdit$.pipe(
+        exclude((data: NOWEBLabel) => data.deleted),
+        map(this.toLabel.bind(this)),
+      ),
+    );
+    this.events2.get(WAHAEvents.LABEL_DELETED).switch(
+      labelsEdit$.pipe(
+        filter((data: NOWEBLabel) => data.deleted),
+        map(this.toLabel.bind(this)),
+      ),
+    );
+    const labelsAssociation$ = fromEvent(this.sock.ev, 'labels.association');
+    const labelsAssociationAdd$: Observable<ChatLabelAssociation> =
+      labelsAssociation$.pipe(
+        filter(({ type }: any) => type === 'add'),
+        map((data) => data.association),
+        filter(
+          (association: any) => association.type === LabelAssociationType.Chat,
+        ),
+      );
+
+    const labelsAssociationRemove$: Observable<ChatLabelAssociation> =
+      labelsAssociation$.pipe(
+        filter(({ type }: any) => type === 'remove'),
+        map((data) => data.association),
+        filter(
+          (association: any) => association.type === LabelAssociationType.Chat,
+        ),
+      );
+    this.events2
+      .get(WAHAEvents.LABEL_CHAT_ADDED)
+      .switch(
+        labelsAssociationAdd$.pipe(
+          mergeMap(this.toLabelChatAssociation.bind(this)),
+        ),
+      );
+    this.events2
+      .get(WAHAEvents.LABEL_CHAT_DELETED)
+      .switch(
+        labelsAssociationRemove$.pipe(
+          mergeMap(this.toLabelChatAssociation.bind(this)),
+        ),
+      );
   }
 
-  private processMessageReaction(messages: any[]): WAMessageReaction[] {
-    const reactions = [];
-    for (const message of messages) {
-      if (!message) return [];
-      if (!message.message) return [];
-      if (!message.message.reactionMessage) return [];
+  /**
+   * END - Methods for API
+   */
 
-      const id = buildMessageId(message.key);
-      const fromToParticipant = getFromToParticipant(message);
-      const reactionMessage = message.message.reactionMessage;
-      const messageId = buildMessageId(reactionMessage.key);
-      const reaction: WAMessageReaction = {
-        id: id,
-        timestamp: message.messageTimestamp,
-        from: toCusFormat(fromToParticipant.from),
-        fromMe: message.key.fromMe,
-        to: toCusFormat(fromToParticipant.to),
-        participant: toCusFormat(fromToParticipant.participant),
-        reaction: {
-          text: reactionMessage.text,
-          messageId: messageId,
-        },
-      };
-      reactions.push(reaction);
-    }
-    return reactions;
+  private processMessageReaction(message): WAMessageReaction | null {
+    if (!message) return null;
+    if (!message.message) return null;
+    if (!message.message.reactionMessage) return null;
+
+    const id = buildMessageId(message.key);
+    const fromToParticipant = getFromToParticipant(message);
+    const reactionMessage = message.message.reactionMessage;
+    const messageId = buildMessageId(reactionMessage.key);
+    const reaction: WAMessageReaction = {
+      id: id,
+      timestamp: message.messageTimestamp,
+      from: toCusFormat(fromToParticipant.from),
+      fromMe: message.key.fromMe,
+      to: toCusFormat(fromToParticipant.to),
+      participant: toCusFormat(fromToParticipant.participant),
+      reaction: {
+        text: reactionMessage.text,
+        messageId: messageId,
+      },
+    };
+    return reaction;
   }
 
   private async processIncomingMessage(message, downloadMedia = true) {
