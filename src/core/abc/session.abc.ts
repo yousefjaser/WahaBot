@@ -412,6 +412,18 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
+  public pinMessage(
+    chatId: string,
+    messageId: string,
+    duration: number,
+  ): Promise<boolean> {
+    throw new NotImplementedByEngineError();
+  }
+
+  public unpinMessage(chatId: string, messageId: string): Promise<boolean> {
+    throw new NotImplementedByEngineError();
+  }
+
   public deleteMessage(chatId: string, messageId: string) {
     throw new NotImplementedByEngineError();
   }

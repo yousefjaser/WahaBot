@@ -578,7 +578,6 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       );
     }
 
-    const limit = query.limit;
     const downloadMedia = query.downloadMedia;
     // Test there's chat with id
     await this.whatsapp.getChatById(this.ensureSuffix(chatId));
@@ -605,6 +604,23 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     const message = await this.whatsapp.getMessageById(messageId);
     if (!message) return null;
     return await this.processIncomingMessage(message, query.downloadMedia);
+  }
+
+  public async pinMessage(
+    chatId: string,
+    messageId: string,
+    duration: number,
+  ): Promise<boolean> {
+    const message = await this.whatsapp.getMessageById(messageId);
+    return message.pin(duration);
+  }
+
+  public async unpinMessage(
+    chatId: string,
+    messageId: string,
+  ): Promise<boolean> {
+    const message = await this.whatsapp.getMessageById(messageId);
+    return message.unpin();
   }
 
   async deleteChat(chatId) {

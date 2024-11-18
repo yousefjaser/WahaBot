@@ -52,6 +52,7 @@ import {
   GetChatMessageQuery,
   GetChatMessagesFilter,
   GetChatMessagesQuery,
+  PinDuration,
 } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
 import { ContactQuery, ContactRequest } from '@waha/structures/contacts.dto';
@@ -829,6 +830,34 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const message = await this.store.getMessageById(toJID(chatId), key.id);
     if (!message) return null;
     return await this.processIncomingMessage(message, query.downloadMedia);
+  }
+
+  public async pinMessage(
+    chatId: string,
+    messageId: string,
+    duration: PinDuration,
+  ): Promise<boolean> {
+    const jid = toJID(chatId);
+    const key = parseMessageIdSerialized(messageId);
+    await this.sock.sendMessage(jid, {
+      pin: key,
+      type: proto.PinInChat.Type.PIN_FOR_ALL,
+      time: duration,
+    });
+    return true;
+  }
+
+  public async unpinMessage(
+    chatId: string,
+    messageId: string,
+  ): Promise<boolean> {
+    const jid = toJID(chatId);
+    const key = parseMessageIdSerialized(messageId);
+    await this.sock.sendMessage(jid, {
+      pin: key,
+      type: proto.PinInChat.Type.UNPIN_FOR_ALL,
+    });
+    return true;
   }
 
   async setReaction(request: MessageReactionRequest) {
@@ -1916,7 +1945,10 @@ function buildMessageId({ id, remoteJid, fromMe }) {
  * false_11111111111@c.us_AAA
  * {id: "AAA", remoteJid: "11111111111@s.whatsapp.net", "fromMe": false}
  */
-function parseMessageIdSerialized(messageId: string, soft: boolean = false) {
+function parseMessageIdSerialized(
+  messageId: string,
+  soft: boolean = false,
+): WAMessageKey {
   if (!messageId.includes('_') && soft) {
     return { id: messageId };
   }
