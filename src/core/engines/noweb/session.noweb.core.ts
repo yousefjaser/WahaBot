@@ -158,7 +158,7 @@ import { NowebAuthFactoryCore } from './NowebAuthFactoryCore';
 import { INowebStore } from './store/INowebStore';
 import { NowebPersistentStore } from './store/NowebPersistentStore';
 import { NowebStorageFactoryCore } from './store/NowebStorageFactoryCore';
-import { extractMediaContent } from './utils';
+import { ensureNumber, extractMediaContent } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const QRCode = require('qrcode');
@@ -1507,7 +1507,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const messageId = buildMessageId(reactionMessage.key);
     const reaction: WAMessageReaction = {
       id: id,
-      timestamp: message.messageTimestamp,
+      timestamp: ensureNumber(message.messageTimestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.key.fromMe,
       to: toCusFormat(fromToParticipant.to),
@@ -1556,7 +1556,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const ack = message.ack || message.status - 1;
     return Promise.resolve({
       id: id,
-      timestamp: message.messageTimestamp,
+      timestamp: ensureNumber(message.messageTimestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.key.fromMe,
       body: body,
@@ -1700,7 +1700,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       const pollVote: PollVote = {
         ...voteDestination,
         selectedOptions: selectedOptions,
-        timestamp: pollUpdate.senderTimestampMs,
+        timestamp: ensureNumber(pollUpdate.senderTimestampMs),
       };
       const payload: PollVotePayload = {
         vote: pollVote,
@@ -1732,7 +1732,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       // https://github.com/WhiskeySockets/Baileys/pull/348
       // Or without toNumber() - it depends on the PR above
       // timestamp: pollUpdateMessage.senderTimestampMs.toNumber()
-      timestamp: message.messageTimestamp,
+      timestamp: ensureNumber(message.messageTimestamp),
     };
     const payload: PollVotePayload = {
       vote: pollVote,
