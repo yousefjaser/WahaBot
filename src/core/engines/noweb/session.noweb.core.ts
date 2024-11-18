@@ -1578,6 +1578,9 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       return null;
     }
     const quotedMessage = contextInfo.quotedMessage;
+    if (!quotedMessage) {
+      return null;
+    }
     const body = this.extractBody(quotedMessage);
     return {
       id: contextInfo.stanzaId,
