@@ -1935,9 +1935,13 @@ export function toJID(chatId) {
  * {id: "AAA", remoteJid: "11111111111@s.whatsapp.net", "fromMe": false}
  * false_11111111111@c.us_AA
  */
-function buildMessageId({ id, remoteJid, fromMe }) {
+function buildMessageId({ id, remoteJid, fromMe, participant }: WAMessageKey) {
   const chatId = toCusFormat(remoteJid);
-  return `${fromMe || false}_${chatId}_${id}`;
+  const parts = [fromMe || false, chatId, id];
+  if (participant) {
+    parts.push(toCusFormat(participant));
+  }
+  return parts.join('_');
 }
 
 /**
@@ -1954,16 +1958,22 @@ function parseMessageIdSerialized(
   }
 
   const parts = messageId.split('_');
-  if (parts.length != 3) {
+  if (parts.length != 3 && parts.length != 4) {
     throw new Error(
-      'Message id be in format false_11111111111@c.us_AAAAAAAAAAAAAAAAAAAA',
+      'Message id be in format false_11111111111@c.us_AAAAAAAAAAAAAAAAAAAA[_participant]',
     );
   }
   const fromMe = parts[0] == 'true';
   const chatId = parts[1];
   const remoteJid = toJID(chatId);
   const id = parts[2];
-  return { fromMe: fromMe, id: id, remoteJid: remoteJid };
+  const participant = parts[3] ? toJID(parts[3]) : undefined;
+  return {
+    fromMe: fromMe,
+    id: id,
+    remoteJid: remoteJid,
+    participant: participant,
+  };
 }
 
 function getId(object) {
