@@ -369,6 +369,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.connectStore();
     this.listenConnectionEvents();
     this.subscribeEngineEvents2();
+    this.listenContactsUpdatePictureProfile();
     this.enableAutoRestart();
   }
 
@@ -1518,6 +1519,26 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
           mergeMap(this.toLabelChatAssociation.bind(this)),
         ),
       );
+  }
+
+  protected listenContactsUpdatePictureProfile() {
+    this.sock.ev.on('contacts.update', async (updates) => {
+      for (const update of updates) {
+        if (update.imgUrl !== 'changed') {
+          continue;
+        }
+
+        this.logger.debug({ jid: update.id }, 'Profile picture updated');
+        const url = await this.refreshProfilePicture(update.id);
+        if (isJidUser(update.id)) {
+          // update 123@c.us and 123 profiles as well
+          const cus = toCusFormat(update.id);
+          this.profilePictures.set(cus, url);
+          const phone = update.id.split('@')[0];
+          this.profilePictures.set(phone, url);
+        }
+      }
+    });
   }
 
   /**
