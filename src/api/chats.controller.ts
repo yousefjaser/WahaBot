@@ -23,6 +23,8 @@ import { SessionManager } from '../core/abc/manager.abc';
 import { WhatsappSession } from '../core/abc/session.abc';
 import { parseBool } from '../helpers';
 import {
+  ChatPictureQuery,
+  ChatPictureResponse,
   ChatsPaginationParams,
   GetChatMessageQuery,
   GetChatMessagesFilter,
@@ -57,6 +59,19 @@ class ChatsController {
     @Param('chatId') chatId: string,
   ) {
     return session.deleteChat(chatId);
+  }
+
+  @Get(':chatId/picture')
+  @SessionApiParam
+  @ApiOperation({ summary: 'Gets chat picture' })
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async getChatPicture(
+    @WorkingSessionParam session: WhatsappSession,
+    @Param('chatId') chatId: string,
+    @Query() query: ChatPictureQuery,
+  ): Promise<ChatPictureResponse> {
+    const url = await session.getContactProfilePicture(chatId, query.refresh);
+    return { url: url };
   }
 
   @Get(':chatId/messages')

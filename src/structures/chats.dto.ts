@@ -38,6 +38,23 @@ export class GetChatMessagesFilter {
   'filter.fromMe'?: boolean;
 }
 
+export class ChatPictureQuery {
+  @Transform(BooleanString)
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    example: false,
+    required: false,
+    description:
+      'Refresh the picture from the server (24h cache by default). Do not refresh if not needed, you can get rate limit error',
+  })
+  refresh?: boolean = false;
+}
+
+export class ChatPictureResponse {
+  url: string;
+}
+
 export class GetChatMessagesQuery {
   @IsNumber()
   @IsOptional()
