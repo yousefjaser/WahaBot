@@ -504,8 +504,19 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public getContactProfilePicture(query: ContactQuery) {
-    throw new NotImplementedByEngineError();
+  /**
+   * Fetch the latest profile picture of the contact (group, newsletter, etc.)
+   * @param id
+   */
+  abstract fetchContactProfilePicture(id: string): Promise<string | null>;
+
+  public async getContactProfilePicture(id: string): Promise<string | null> {
+    const url = await this.fetchContactProfilePicture(id).catch((err) => {
+      this.logger.error('Error fetching profile picture');
+      this.logger.error(err, err.stack);
+      return null;
+    });
+    return url;
   }
 
   public blockContact(request: ContactRequest) {

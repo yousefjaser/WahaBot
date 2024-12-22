@@ -731,11 +731,10 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     return { about: await contact.getAbout() };
   }
 
-  public async getContactProfilePicture(query: ContactQuery) {
-    const contact = await this.whatsapp.getContactById(
-      this.ensureSuffix(query.contactId),
-    );
-    return { profilePictureURL: await contact.getProfilePicUrl() };
+  public async fetchContactProfilePicture(id: string) {
+    const contact = await this.whatsapp.getContactById(this.ensureSuffix(id));
+    const url = await contact.getProfilePicUrl();
+    return url;
   }
 
   public async blockContact(request: ContactRequest) {

@@ -1062,10 +1062,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public async getContactProfilePicture(query: ContactQuery) {
-    const contact = this.ensureSuffix(query.contactId);
+  public async fetchContactProfilePicture(id: string) {
+    const contact = this.ensureSuffix(id);
     const url = await this.sock.profilePictureUrl(contact, 'image');
-    return { profilePictureURL: url };
+    return url;
   }
 
   public async blockContact(request: ContactRequest) {

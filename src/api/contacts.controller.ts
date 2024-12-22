@@ -77,7 +77,8 @@ export class ContactsController {
   })
   async getProfilePicture(@Query() query: ContactQuery) {
     const whatsapp = await this.manager.getWorkingSession(query.session);
-    return whatsapp.getContactProfilePicture(query);
+    const url = await whatsapp.getContactProfilePicture(query.contactId);
+    return { profilePictureURL: url };
   }
 
   @Post('/block')
