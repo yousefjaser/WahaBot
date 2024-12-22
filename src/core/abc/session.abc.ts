@@ -518,8 +518,8 @@ export abstract class WhatsappSession {
     id: string,
     refresh: boolean,
   ): Promise<string | null> {
-    const url: string = this.profilePictures.get(id);
-    if (!url || refresh) {
+    const has: boolean = this.profilePictures.has(id);
+    if (!has || refresh) {
       await this.refreshProfilePicture(id);
     }
     return this.profilePictures.get(id);
