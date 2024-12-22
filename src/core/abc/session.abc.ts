@@ -19,6 +19,7 @@ import { complete } from '@waha/utils/reactive/complete';
 import { SwitchObservable } from '@waha/utils/reactive/SwitchObservable';
 import * as fs from 'fs';
 import * as lodash from 'lodash';
+import * as NodeCache from 'node-cache';
 import { Logger } from 'pino';
 import {
   BehaviorSubject,
@@ -132,6 +133,9 @@ export abstract class WhatsappSession {
   private shouldPrintQR: boolean;
   protected events2: DefaultMap<WAHAEvents, SwitchObservable<any>>;
   private status$: Subject<WAHASessionStatus>;
+  private profilePictures: NodeCache = new NodeCache({
+    stdTTL: 24 * 60 * 60, // 1 day
+  });
 
   public constructor({
     name,
@@ -510,13 +514,25 @@ export abstract class WhatsappSession {
    */
   abstract fetchContactProfilePicture(id: string): Promise<string | null>;
 
-  public async getContactProfilePicture(id: string): Promise<string | null> {
+  public async getContactProfilePicture(
+    id: string,
+    refresh: boolean,
+  ): Promise<string | null> {
+    const url: string = this.profilePictures.get(id);
+    if (!url || refresh) {
+      await this.refreshProfilePicture(id);
+    }
+    return this.profilePictures.get(id);
+  }
+
+  protected async refreshProfilePicture(id: string) {
+    this.profilePictures.del(id);
     const url = await this.fetchContactProfilePicture(id).catch((err) => {
       this.logger.error('Error fetching profile picture');
       this.logger.error(err, err.stack);
       return null;
     });
-    return url;
+    this.profilePictures.set(id, url);
   }
 
   public blockContact(request: ContactRequest) {
