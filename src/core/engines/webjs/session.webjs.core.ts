@@ -13,7 +13,6 @@ import { IMediaEngineProcessor } from '@waha/core/media/IMediaEngineProcessor';
 import { QR } from '@waha/core/QR';
 import { splitAt } from '@waha/helpers';
 import { PairingCodeResponse } from '@waha/structures/auth.dto';
-import { CallData } from '@waha/structures/calls.dto';
 import {
   Channel,
   ChannelRole,
@@ -21,8 +20,8 @@ import {
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
 import {
-  ChatArchiveEvent,
   ChatSortField,
+  ChatSummary,
   GetChatMessageQuery,
   GetChatMessagesFilter,
   GetChatMessagesQuery,
@@ -61,14 +60,10 @@ import {
 } from '@waha/structures/groups.dto';
 import { Label, LabelDTO, LabelID } from '@waha/structures/labels.dto';
 import { ReplyToMessage } from '@waha/structures/message.dto';
-import { PaginationParams } from '@waha/structures/pagination.dto';
+import { PaginationParams, SortOrder } from '@waha/structures/pagination.dto';
 import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
 import { MeInfo } from '@waha/structures/sessions.dto';
-import {
-  BROADCAST_ID,
-  StatusRequest,
-  TextStatus,
-} from '@waha/structures/status.dto';
+import { StatusRequest, TextStatus } from '@waha/structures/status.dto';
 import {
   EnginePayload,
   WAMessageRevokedBody,
@@ -571,6 +566,41 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
         break;
     }
     return this.whatsapp.getChats(pagination);
+  }
+
+  public async getChatsOverview(
+    pagination: PaginationParams,
+  ): Promise<ChatSummary[]> {
+    pagination = {
+      ...pagination,
+      sortBy: ChatSortField.CONVERSATION_TIMESTAMP,
+      sortOrder: SortOrder.DESC,
+    };
+    const chats = await this.getChats(pagination);
+
+    const promises = [];
+    for (const chat of chats) {
+      promises.push(this.fetchChatSummary(chat));
+    }
+    const result = await Promise.all(promises);
+    return result;
+  }
+
+  protected async fetchChatSummary(chat: Chat): Promise<ChatSummary> {
+    const picture = await this.getContactProfilePicture(
+      chat.id._serialized,
+      false,
+    );
+    const lastMessage = !!chat.lastMessage
+      ? this.toWAMessage(chat.lastMessage)
+      : null;
+    return {
+      id: chat.id._serialized,
+      name: chat.name || null,
+      picture: picture,
+      lastMessage: lastMessage,
+      _chat: chat,
+    };
   }
 
   public async getChatMessages(

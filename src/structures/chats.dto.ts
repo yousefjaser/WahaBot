@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BooleanString } from '@waha/nestjs/validation/BooleanString';
-import { PaginationParams } from '@waha/structures/pagination.dto';
+import {
+  LimitOffsetParams,
+  PaginationParams,
+} from '@waha/structures/pagination.dto';
 import { ChatIdProperty } from '@waha/structures/properties.dto';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNumber, IsOptional } from 'class-validator';
@@ -120,6 +123,21 @@ export class PinMessageRequest {
     example: 86400,
   })
   duration: number;
+}
+
+export class OverviewPaginationParams extends LimitOffsetParams {
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  limit?: number = 20;
+}
+
+export class ChatSummary {
+  id: string;
+  name: string | null;
+  picture: string | null;
+  lastMessage: any;
+  _chat: any;
 }
 
 /**

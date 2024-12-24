@@ -4,6 +4,7 @@ import {
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
 import {
+  ChatSummary,
   GetChatMessageQuery,
   GetChatMessagesFilter,
   GetChatMessagesQuery,
@@ -133,7 +134,7 @@ export abstract class WhatsappSession {
   private shouldPrintQR: boolean;
   protected events2: DefaultMap<WAHAEvents, SwitchObservable<any>>;
   private status$: Subject<WAHASessionStatus>;
-  private profilePictures: NodeCache = new NodeCache({
+  protected profilePictures: NodeCache = new NodeCache({
     stdTTL: 24 * 60 * 60, // 1 day
   });
 
@@ -397,6 +398,12 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
+  public getChatsOverview(
+    pagination: PaginationParams,
+  ): Promise<ChatSummary[]> {
+    throw new NotImplementedByEngineError();
+  }
+
   public deleteChat(chatId) {
     throw new NotImplementedByEngineError();
   }
@@ -533,6 +540,7 @@ export abstract class WhatsappSession {
       return null;
     });
     this.profilePictures.set(id, url);
+    return url;
   }
 
   public blockContact(request: ContactRequest) {

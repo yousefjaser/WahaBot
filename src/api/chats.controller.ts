@@ -21,14 +21,15 @@ import {
 
 import { SessionManager } from '../core/abc/manager.abc';
 import { WhatsappSession } from '../core/abc/session.abc';
-import { parseBool } from '../helpers';
 import {
   ChatPictureQuery,
   ChatPictureResponse,
   ChatsPaginationParams,
+  ChatSummary,
   GetChatMessageQuery,
   GetChatMessagesFilter,
   GetChatMessagesQuery,
+  OverviewPaginationParams,
   PinMessageRequest,
 } from '../structures/chats.dto';
 import { EditMessageRequest } from '../structures/chatting.dto';
@@ -48,6 +49,20 @@ class ChatsController {
     @Query() pagination: ChatsPaginationParams,
   ) {
     return session.getChats(pagination);
+  }
+
+  @Get('overview')
+  @SessionApiParam
+  @ApiOperation({
+    summary:
+      'Get chats overview. Includes all necessary things to build UI "your chats overview" page - chat id, name, picture, last message. Sorting by last message timestamp',
+  })
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  getChatsOverview(
+    @WorkingSessionParam session: WhatsappSession,
+    @Query() pagination: OverviewPaginationParams,
+  ): Promise<ChatSummary[]> {
+    return session.getChatsOverview(pagination);
   }
 
   @Delete(':chatId')

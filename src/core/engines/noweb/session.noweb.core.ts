@@ -1,5 +1,6 @@
 import makeWASocket, {
   Browsers,
+  Chat,
   Contact,
   DisconnectReason,
   downloadMediaMessage,
@@ -9,7 +10,9 @@ import makeWASocket, {
   getKeyAuthor,
   getUrlFromDirectPath,
   isJidGroup,
+  isJidNewsletter,
   isJidStatusBroadcast,
+  isJidUser,
   isRealMessage,
   jidNormalizedUser,
   makeCacheableSignalKeyStore,
@@ -50,6 +53,7 @@ import {
   ListChannelsQuery,
 } from '@waha/structures/channels.dto';
 import {
+  ChatSummary,
   GetChatMessageQuery,
   GetChatMessagesFilter,
   GetChatMessagesQuery,
@@ -902,10 +906,44 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
    */
 
   async getChats(pagination: PaginationParams) {
-    const chats = await this.store.getChats(pagination);
+    const chats = await this.store.getChats(pagination, true);
     // Remove unreadCount, it's not ready yet
     chats.forEach((chat) => delete chat.unreadCount);
     return chats;
+  }
+
+  public async getChatsOverview(
+    pagination: PaginationParams,
+  ): Promise<ChatSummary[]> {
+    const chats = await this.store.getChats(pagination, false);
+    // Remove unreadCount, it's not ready yet
+    chats.forEach((chat) => delete chat.unreadCount);
+
+    const promises = [];
+    for (const chat of chats) {
+      promises.push(this.fetchChatSummary(chat));
+    }
+    const result = await Promise.all(promises);
+    return result;
+  }
+
+  protected async fetchChatSummary(chat: Chat): Promise<ChatSummary> {
+    const id = toCusFormat(chat.id);
+    const name = chat.name;
+    const picture = await this.getContactProfilePicture(chat.id, false);
+    const messages = await this.getChatMessages(
+      chat.id,
+      { limit: 1, offset: 0, downloadMedia: false },
+      {},
+    );
+    const message = messages.length > 0 ? messages[0] : null;
+    return {
+      id: id,
+      name: name || null,
+      picture: picture,
+      lastMessage: message,
+      _chat: chat,
+    };
   }
 
   protected async chatsPutArchive(
@@ -1065,6 +1103,12 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
 
   public async fetchContactProfilePicture(id: string) {
     const contact = this.ensureSuffix(id);
+    if (isJidNewsletter(id)) {
+      return null;
+    }
+    if (isJidStatusBroadcast(id)) {
+      return null;
+    }
     const url = await this.sock.profilePictureUrl(contact, 'image');
     return url;
   }
