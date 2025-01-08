@@ -1243,6 +1243,11 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return this.toWahaPresences(remoteJid, result);
   }
 
+  public subscribePresence(id: string): Promise<void> {
+    const jid = toJID(id);
+    return this.sock.presenceSubscribe(jid);
+  }
+
   /**
    * Status methods
    */

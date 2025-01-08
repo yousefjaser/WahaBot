@@ -651,7 +651,7 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public subscribePresence(id: string): Promise<void> {
+  public subscribePresence(id: string): Promise<any> {
     throw new NotImplementedByEngineError();
   }
 
