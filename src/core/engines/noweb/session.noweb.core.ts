@@ -1986,7 +1986,7 @@ export class NOWEBEngineMediaProcessor implements IMediaEngineProcessor<any> {
 /**
  * Convert from 11111111111@s.whatsapp.net to 11111111111@c.us
  */
-function toCusFormat(remoteJid) {
+export function toCusFormat(remoteJid) {
   if (!remoteJid) {
     return remoteJid;
   }
@@ -2008,7 +2008,9 @@ function toCusFormat(remoteJid) {
   if (remoteJid == 'me') {
     return remoteJid;
   }
-  const number = remoteJid.split('@')[0];
+  let number = remoteJid.split('@')[0];
+  // remove :{device} part
+  number = number.split(':')[0];
   return ensureSuffix(number);
 }
 
@@ -2051,7 +2053,7 @@ function buildMessageId({ id, remoteJid, fromMe, participant }: WAMessageKey) {
  * false_11111111111@c.us_AAA
  * {id: "AAA", remoteJid: "11111111111@s.whatsapp.net", "fromMe": false}
  */
-function parseMessageIdSerialized(
+export function parseMessageIdSerialized(
   messageId: string,
   soft: boolean = false,
 ): WAMessageKey {
