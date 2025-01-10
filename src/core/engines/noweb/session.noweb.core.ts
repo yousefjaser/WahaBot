@@ -165,9 +165,6 @@ import { NowebPersistentStore } from './store/NowebPersistentStore';
 import { NowebStorageFactoryCore } from './store/NowebStorageFactoryCore';
 import { ensureNumber, extractMediaContent } from './utils';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const QRCode = require('qrcode');
-
 export const BaileysEvents = {
   CONNECTION_UPDATE: 'connection.update',
   CREDS_UPDATE: 'creds.update',
@@ -458,8 +455,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
 
       // Save QR
       if (qr) {
-        const url = await QRCode.toDataURL(qr);
-        this.qr.save(url, qr);
+        this.qr.save(qr);
         this.printQR(this.qr);
         this.status = WAHASessionStatus.SCAN_QR_CODE;
       }
@@ -632,7 +628,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         `The session is starting, please try again after few seconds`,
       );
     } else if (this.status === WAHASessionStatus.SCAN_QR_CODE) {
-      return Promise.resolve(this.qr.get());
+      return this.qr.get();
     } else if (this.status === WAHASessionStatus.WORKING) {
       throw new UnprocessableEntityException(
         `Can not get screenshot for non chrome based engine.`,
