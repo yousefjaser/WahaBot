@@ -4,10 +4,6 @@ import { LocalStore } from '@waha/core/storage/LocalStore';
 import { Field, Index, Schema } from '@waha/core/storage/sqlite3/Schema';
 import { Sqlite3KVRepository } from '@waha/core/storage/sqlite3/Sqlite3KVRepository';
 import { MeInfo } from '@waha/structures/sessions.dto';
-import * as path from 'path';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Database = require('better-sqlite3');
 
 const SCHEMA = new Schema(
   'me',
@@ -20,7 +16,7 @@ class SessionMeInfo {
   me?: MeInfo;
 }
 
-export class LocalSessionMeRepository
+export class Sqlite3SessionMeRepository
   extends Sqlite3KVRepository<SessionMeInfo>
   implements ISessionMeRepository
 {

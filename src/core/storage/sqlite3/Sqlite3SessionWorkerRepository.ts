@@ -23,7 +23,7 @@ const SCHEMA = new Schema(
   ],
 );
 
-export class LocalSessionWorkerRepository
+export class Sqlite3SessionWorkerRepository
   extends Sqlite3KVRepository<SessionWorkerInfo>
   implements ISessionWorkerRepository
 {
