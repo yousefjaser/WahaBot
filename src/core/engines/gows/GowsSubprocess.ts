@@ -78,7 +78,7 @@ export class GowsSubprocess {
 
   async stop() {
     this.logger.info('Stopping GOWS subprocess...');
-    this.child?.kill();
+    this.child?.kill('SIGTERM');
     this.logger.info('GOWS subprocess stopped');
   }
 
