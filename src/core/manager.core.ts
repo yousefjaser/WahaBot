@@ -119,11 +119,10 @@ export class SessionManagerCore extends SessionManager {
   }
 
   async beforeApplicationShutdown(signal?: string) {
-    this.stopEvents();
-    if (!this.session) {
-      return;
+    if (this.session) {
+      await this.stop(this.DEFAULT, true);
     }
-    await this.stop(this.DEFAULT, true);
+    this.stopEvents();
     await this.engineBootstrap.shutdown();
   }
 
