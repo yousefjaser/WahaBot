@@ -20,7 +20,9 @@ export class GowsSubprocess {
     this.logger.info('Starting GOWS subprocess...');
     this.logger.debug(`GOWS path '${this.path}', socket: '${this.socket}'...`);
 
-    this.child = spawn(this.path, ['--socket', this.socket]);
+    this.child = spawn(this.path, ['--socket', this.socket], {
+      detached: true,
+    });
     this.logger.debug(`GOWS started with PID: ${this.child.pid}`);
     this.child.on('close', async (code, singal) => {
       const msg = code
