@@ -1,6 +1,23 @@
 import { Field, Index, Schema } from '@waha/core/storage/Schema';
 import { Migration } from '@waha/core/storage/sql/SqlKVRepository';
 
+/**
+ * Session Config
+ */
+export const SQLSessionConfigSchema = new Schema(
+  'session_config',
+  [new Field('id', 'TEXT'), new Field('data', 'TEXT')],
+  [new Index('session_config_id_index', ['id'])],
+);
+
+export const SQLSessionConfigMigrations: Migration[] = [
+  'CREATE TABLE IF NOT EXISTS session_config (id TEXT PRIMARY KEY, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS session_config_id_index ON session_config (id)',
+];
+
+/**
+ * Me
+ */
 export const SQLMeSchema = new Schema(
   'me',
   [new Field('id', 'TEXT'), new Field('data', 'TEXT')],
@@ -12,6 +29,9 @@ export const SQLMeMigrations: Migration[] = [
   'CREATE UNIQUE INDEX IF NOT EXISTS me_id_index ON me (id)',
 ];
 
+/**
+ * Worker
+ */
 export const SQLSessionWorkerSchema = new Schema(
   'session_worker',
   [
