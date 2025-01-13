@@ -142,6 +142,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       this.logger.error('Failed to start the client');
       this.logger.error(err, err.stack);
       this.status = WAHASessionStatus.FAILED;
+      throw err;
     }
   }
 

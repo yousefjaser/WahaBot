@@ -24,6 +24,7 @@ export const NowebGroupsSchema = new Schema(
   [new Field('id', 'TEXT'), new Field('data', 'TEXT')],
   [new Index('groups_id_index', ['id'])],
 );
+
 export const NowebMessagesSchema = new Schema(
   'messages',
   [
