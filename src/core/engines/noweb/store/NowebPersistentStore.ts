@@ -343,7 +343,7 @@ export class NowebPersistentStore implements INowebStore {
 
   private async onContactUpdate(updates: Partial<Contact>[]) {
     for (const update of updates) {
-      const contact = await this.contactRepo.getById(update.id);
+      let contact = await this.contactRepo.getById(update.id);
 
       if (!contact) {
         this.logger.warn(
@@ -351,7 +351,7 @@ export class NowebPersistentStore implements INowebStore {
             update,
           )}'`,
         );
-        continue;
+        contact = {} as Contact;
         // TODO: Find contact by hash if not found
         //  find contact by attrs.hash, when user is not saved as a contact
         //  check the in-memory for that
