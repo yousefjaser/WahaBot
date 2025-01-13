@@ -1,4 +1,6 @@
 import { ALL_JID } from '@waha/core/engines/noweb/session.noweb.core';
+import { NowebMessagesMetadata } from '@waha/core/engines/noweb/store/metadata';
+import { NowebMessagesSchema } from '@waha/core/engines/noweb/store/schemas';
 import { GetChatMessagesFilter } from '@waha/structures/chats.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 
@@ -9,6 +11,14 @@ export class Sqlite3MessagesRepository
   extends NOWEBSqlite3KVRepository<any>
   implements IMessagesRepository
 {
+  get schema() {
+    return NowebMessagesSchema;
+  }
+
+  get metadata() {
+    return NowebMessagesMetadata;
+  }
+
   upsert(messages: any[]): Promise<void> {
     return this.upsertMany(messages);
   }

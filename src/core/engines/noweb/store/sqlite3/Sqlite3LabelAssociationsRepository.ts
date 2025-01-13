@@ -3,6 +3,8 @@ import {
   LabelAssociationType,
 } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
 import { ILabelAssociationRepository } from '@waha/core/engines/noweb/store/ILabelAssociationsRepository';
+import { NowebLabelAssociationsMetadata } from '@waha/core/engines/noweb/store/metadata';
+import { NowebLabelAssociationsSchema } from '@waha/core/engines/noweb/store/schemas';
 
 import { NOWEBSqlite3KVRepository } from './NOWEBSqlite3KVRepository';
 
@@ -10,6 +12,14 @@ export class Sqlite3LabelAssociationsRepository
   extends NOWEBSqlite3KVRepository<LabelAssociation>
   implements ILabelAssociationRepository
 {
+  get schema() {
+    return NowebLabelAssociationsSchema;
+  }
+
+  get metadata() {
+    return NowebLabelAssociationsMetadata;
+  }
+
   async deleteOne(association: LabelAssociation): Promise<void> {
     await this.deleteBy({
       type: association.type,

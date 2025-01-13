@@ -5,10 +5,10 @@ import { ILabelsRepository } from '@waha/core/engines/noweb/store/ILabelsReposit
 import { Sqlite3GroupRepository } from '@waha/core/engines/noweb/store/sqlite3/Sqlite3GroupRepository';
 import { Sqlite3LabelAssociationsRepository } from '@waha/core/engines/noweb/store/sqlite3/Sqlite3LabelAssociationsRepository';
 import { Sqlite3LabelsRepository } from '@waha/core/engines/noweb/store/sqlite3/Sqlite3LabelsRepository';
-import { Field, Index, Schema } from '@waha/core/storage/sqlite3/Schema';
+import { Field, Index, Schema } from '@waha/core/storage/Schema';
 
 import { INowebStorage } from '../INowebStorage';
-import { NOWEB_STORE_SCHEMA } from '../Schema';
+import { NOWEB_STORE_SCHEMA } from '../schemas';
 import { Sqlite3ChatRepository } from './Sqlite3ChatRepository';
 import { Sqlite3ContactRepository } from './Sqlite3ContactRepository';
 import { Sqlite3MessagesRepository } from './Sqlite3MessagesRepository';
@@ -121,37 +121,27 @@ export class Sqlite3Storage extends INowebStorage {
   }
 
   getContactsRepository() {
-    return new Sqlite3ContactRepository(this.db, this.getSchema('contacts'));
+    return new Sqlite3ContactRepository(this.db);
   }
 
   getChatRepository() {
-    return new Sqlite3ChatRepository(this.db, this.getSchema('chats'));
+    return new Sqlite3ChatRepository(this.db);
   }
 
   getGroupRepository() {
-    return new Sqlite3GroupRepository(this.db, this.getSchema('groups'));
+    return new Sqlite3GroupRepository(this.db);
   }
 
   getLabelsRepository(): ILabelsRepository {
-    return new Sqlite3LabelsRepository(this.db, this.getSchema('labels'));
+    return new Sqlite3LabelsRepository(this.db);
   }
 
   getLabelAssociationRepository(): ILabelAssociationRepository {
-    const metadata = this.getLabelAssociationMetadata();
-    return new Sqlite3LabelAssociationsRepository(
-      this.db,
-      this.getSchema('labelAssociations'),
-      metadata,
-    );
+    return new Sqlite3LabelAssociationsRepository(this.db);
   }
 
   getMessagesRepository() {
-    const metadata = this.getMessagesMetadata();
-    return new Sqlite3MessagesRepository(
-      this.db,
-      this.getSchema('messages'),
-      metadata,
-    );
+    return new Sqlite3MessagesRepository(this.db);
   }
 
   getSchema(name: string) {
