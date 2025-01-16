@@ -480,6 +480,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.status = WAHASessionStatus.STOPPED;
     this.stopEvents();
 
+    this.mediaManager.close();
     await this.end();
     await this.store?.close();
   }
@@ -1945,6 +1946,10 @@ export class NOWEBEngineMediaProcessor implements IMediaEngineProcessor<any> {
 
   getMessageId(message: any): string {
     return message.key.id;
+  }
+
+  getChatId(message: any): string {
+    return toCusFormat(message.key.remoteJid);
   }
 
   getMimetype(message: any): string {

@@ -132,7 +132,8 @@ export class SessionManagerCore extends SessionManager {
   }
 
   private async clearStorage() {
-    const storage = this.mediaStorageFactory.build(
+    const storage = await this.mediaStorageFactory.build(
+      'all',
       this.log.logger.child({ name: 'Storage' }),
     );
     await storage.purge();
@@ -168,7 +169,8 @@ export class SessionManagerCore extends SessionManager {
     logger.level = getPinoLogLevel(this.sessionConfig?.debug);
     const loggerBuilder: LoggerBuilder = logger;
 
-    const storage = this.mediaStorageFactory.build(
+    const storage = await this.mediaStorageFactory.build(
+      name,
       loggerBuilder.child({ name: 'Storage' }),
     );
     await storage.init();
