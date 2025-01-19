@@ -73,3 +73,31 @@ export const NOWEB_STORE_SCHEMA = [
   NowebLabelsSchema,
   NowebLabelAssociationsSchema,
 ];
+
+export const Migrations: string[] = [
+  // Contacts
+  'CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS contacts_id_index ON contacts (id)',
+  // Chats
+  'CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, "conversationTimestamp" INTEGER, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS chats_id_index ON chats (id)',
+  'CREATE INDEX IF NOT EXISTS "chats_conversationTimestamp_index" ON chats ("conversationTimestamp")',
+  // Groups
+  'CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS groups_id_index ON groups (id)',
+  // Messages
+  'CREATE TABLE IF NOT EXISTS messages (jid TEXT, id TEXT, "messageTimestamp" INTEGER, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS messages_id_index ON messages (id)',
+  'CREATE INDEX IF NOT EXISTS messages_jid_id_index ON messages (jid, id)',
+  'CREATE INDEX IF NOT EXISTS messages_jid_timestamp_index ON messages (jid, "messageTimestamp")',
+  'CREATE INDEX IF NOT EXISTS timestamp_index ON messages ("messageTimestamp")',
+  // Labels
+  'CREATE TABLE IF NOT EXISTS labels (id TEXT PRIMARY KEY, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS labels_id_index ON labels (id)',
+  // Label associations
+  'CREATE TABLE IF NOT EXISTS "labelAssociations" (id TEXT PRIMARY KEY, type TEXT, "labelId" TEXT, "chatId" TEXT, "messageId" TEXT, data TEXT)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS label_assoc_id_index ON "labelAssociations" (id)',
+  'CREATE INDEX IF NOT EXISTS label_assoc_type_label_index ON "labelAssociations" (type, "labelId")',
+  'CREATE INDEX IF NOT EXISTS label_assoc_type_chat_index ON "labelAssociations" (type, "chatId")',
+  'CREATE INDEX IF NOT EXISTS label_assoc_type_message_index ON "labelAssociations" (type, "messageId")',
+];

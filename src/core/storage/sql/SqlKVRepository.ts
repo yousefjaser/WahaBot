@@ -1,6 +1,6 @@
 import { Field, Schema } from '@waha/core/storage/Schema';
+import { IJsonQuery } from '@waha/core/storage/sql/IJsonQuery';
 import { ISQLEngine } from '@waha/core/storage/sql/ISQLEngine';
-import { Sqlite3Engine } from '@waha/core/storage/sqlite3/Sqlite3Engine';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 import { KnexPaginator } from '@waha/utils/Paginator';
 import Knex from 'knex';
@@ -9,7 +9,9 @@ export type Migration = string;
 
 export class SqlKVRepository<Entity> {
   protected UPSERT_BATCH_SIZE = 100;
-  protected Paginator = KnexPaginator;
+  protected Paginator: typeof KnexPaginator = KnexPaginator;
+
+  protected jsonQuery: IJsonQuery;
 
   get schema(): Schema {
     throw new Error('Not implemented');
@@ -78,20 +80,22 @@ export class SqlKVRepository<Entity> {
 
   private async upsertBatch(entities: Entity[]): Promise<void> {
     const data = entities.map((entity) => this.dump(entity));
-    const keys = this.columns.map((c) => c.fieldName);
+    const columns = this.columns.map((c) => `"${c.fieldName}"`);
     const values = data.map((d) => Object.values(d)).flat();
-    const sql = `INSERT INTO ${this.table} (${keys.join(', ')})
+    const sql = `INSERT INTO "${this.table}" (${columns.join(', ')})
                  VALUES ${data
-                   .map(() => `(${keys.map(() => '?').join(', ')})`)
+                   .map(() => `(${columns.map(() => '?').join(', ')})`)
                    .join(', ')}
                  ON CONFLICT(id) DO UPDATE
-                     SET ${keys
-                       .map((key) => `${key} = excluded.${key}`)
+                     SET ${columns
+                       .map((column) => `${column} = excluded.${column}`)
                        .join(', ')}`;
     try {
       await this.raw(sql, values);
     } catch (err) {
-      console.error(`Error upserting data: ${err}, values: ${values}`);
+      console.error(
+        `Error upserting data: ${err}, sql: ${sql}, values: ${values}`,
+      );
       throw err;
     }
   }
@@ -113,12 +117,12 @@ export class SqlKVRepository<Entity> {
     return this.getBy({ id: id });
   }
 
-  protected getAllBy(filters: any) {
+  getAllBy(filters: any) {
     const query = this.select().where(filters);
     return this.all(query);
   }
 
-  protected async getBy(filters: any) {
+  public async getBy(filters: any) {
     const query = this.select().where(filters).limit(1);
     return this.get(query);
   }
@@ -135,7 +139,7 @@ export class SqlKVRepository<Entity> {
     await this.deleteBy({ id: id });
   }
 
-  protected async deleteBy(filters: any) {
+  public async deleteBy(filters: any) {
     const query = this.delete().where(filters);
     await this.run(query);
   }
@@ -143,7 +147,7 @@ export class SqlKVRepository<Entity> {
   /**
    * SQL Implementation details
    */
-  protected async raw(sql: string, bindings: any[]): Promise<void> {
+  public async raw(sql: string, bindings: any[]): Promise<void> {
     await this.engine.raw(sql, bindings);
   }
 
@@ -159,7 +163,7 @@ export class SqlKVRepository<Entity> {
     return this.parse(row);
   }
 
-  protected async all(query: Knex.QueryBuilder): Promise<Entity[]> {
+  public async all(query: Knex.QueryBuilder): Promise<Entity[]> {
     const rows = await this.engine.all(query);
     return rows.map((row) => this.parse(row));
   }
@@ -167,7 +171,7 @@ export class SqlKVRepository<Entity> {
   /**
    * SQL helpers
    */
-  protected select() {
+  public select() {
     return this.knex.select().from(this.table);
   }
 
@@ -175,14 +179,18 @@ export class SqlKVRepository<Entity> {
     return this.knex.delete().from(this.table);
   }
 
-  protected pagination(query: any, pagination?: PaginationParams) {
-    const paginator = new this.Paginator(pagination);
+  public pagination(query: any, pagination?: PaginationParams) {
+    const paginator = new this.Paginator(pagination, this.jsonQuery);
     return paginator.apply(query);
   }
 
   /**
    * JSON helpers
    */
+  public filterJson(field: string, key: string): string {
+    return this.jsonQuery.filter(field, key);
+  }
+
   protected stringify(data: any): string {
     return JSON.stringify(data);
   }
@@ -201,7 +209,7 @@ export class SqlKVRepository<Entity> {
       } else if (field.fieldName == 'data') {
         data['data'] = this.stringify(raw);
       } else {
-        data[field.fieldName] = raw[field.fieldName];
+        data[field.fieldName] = raw[field.fieldName] ?? null;
       }
     }
     return data;

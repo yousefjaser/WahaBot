@@ -225,7 +225,7 @@ export class NowebPersistentStore implements INowebStore {
   private async onChatUpsert(chats: Chat[]) {
     for (const chat of chats) {
       delete chat['messages'];
-      chat.conversationTimestamp = toNumber(chat.conversationTimestamp);
+      chat.conversationTimestamp = toNumber(chat.conversationTimestamp) || null;
       await this.chatRepo.save(chat);
     }
     this.logger.info(`store sync - '${chats.length}' synced chats`);
@@ -312,7 +312,7 @@ export class NowebPersistentStore implements INowebStore {
     for (const update of updates) {
       const chat = (await this.chatRepo.getById(update.id)) || ({} as Chat);
       Object.assign(chat, update);
-      chat.conversationTimestamp = toNumber(chat.conversationTimestamp);
+      chat.conversationTimestamp = toNumber(chat.conversationTimestamp) || null;
       delete chat['messages'];
       await this.chatRepo.save(chat);
     }

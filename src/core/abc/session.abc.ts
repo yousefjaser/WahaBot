@@ -539,8 +539,8 @@ export abstract class WhatsappSession {
   protected async refreshProfilePicture(id: string) {
     this.profilePictures.del(id);
     const url = await this.fetchContactProfilePicture(id).catch((err) => {
-      this.logger.error('Error fetching profile picture');
-      this.logger.error(err, err.stack);
+      this.logger.warn('Error fetching profile picture');
+      this.logger.warn(err, err.stack);
       return null;
     });
     this.profilePictures.set(id, url);

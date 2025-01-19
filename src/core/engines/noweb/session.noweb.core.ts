@@ -475,7 +475,6 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         this.logger.error(e, e.stack);
       });
       this.logger.info('Creds saved');
-      this.authNOWEBStore = null;
     }
     this.status = WAHASessionStatus.STOPPED;
     this.stopEvents();
@@ -483,6 +482,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.mediaManager.close();
     await this.end();
     await this.store?.close();
+    this.authNOWEBStore?.close().catch((err) => {
+      this.logger.error('Failed to close NOWEB auth store');
+      this.logger.error(err, err.stack);
+    });
   }
 
   protected async failed() {
