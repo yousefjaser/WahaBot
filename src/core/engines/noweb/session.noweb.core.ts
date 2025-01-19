@@ -1113,8 +1113,18 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     if (isJidStatusBroadcast(id)) {
       return null;
     }
-    const url = await this.sock.profilePictureUrl(contact, 'image');
-    return url;
+    try {
+      const url = await this.sock.profilePictureUrl(contact, 'image');
+      return url;
+    } catch (err) {
+      if (err.message == 'item-not-found') {
+        return null;
+      }
+      if (err.message == 'not-authorized') {
+        return null;
+      }
+      throw err;
+    }
   }
 
   public async blockContact(request: ContactRequest) {
