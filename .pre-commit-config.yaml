@@ -74,4 +74,5 @@ repos:
               .pre-commit-config.yaml|
               ^src/core/engines/webjs/session.webjs.core.ts|
               ^src/core/engines/webjs/_lodash.js|
+              ^tests/perf/.*|
           )$
