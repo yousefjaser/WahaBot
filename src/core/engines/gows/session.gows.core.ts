@@ -1,4 +1,8 @@
-import { isJidGroup, jidNormalizedUser } from '@adiwajshing/baileys';
+import {
+  isJidGroup,
+
+  jidNormalizedUser,
+} from '@adiwajshing/baileys';
 import * as grpc from '@grpc/grpc-js';
 import { connectivityState } from '@grpc/grpc-js';
 import { UnprocessableEntityException } from '@nestjs/common';
@@ -27,6 +31,7 @@ import {
   MessageTextRequest,
   MessageVoiceRequest,
   SendSeenRequest,
+  WANumberExistResult,
 } from '@waha/structures/chatting.dto';
 import {
   ACK_UNKNOWN,
@@ -416,8 +421,20 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     };
   }
 
-  checkNumberStatus(request: CheckNumberStatusQuery) {
-    throw new Error('Method not implemented.');
+  async checkNumberStatus(
+    request: CheckNumberStatusQuery,
+  ): Promise<WANumberExistResult> {
+    const req = new messages.CheckPhonesRequest({
+      session: this.session,
+      phones: [request.phone],
+    });
+    const response = await promisify(this.client.CheckPhones)(req);
+    const data = response.toObject();
+    const info = data.infos[0];
+    return {
+      numberExists: info.registered,
+      chatId: toCusFormat(info.jid),
+    };
   }
 
   sendLocation(request: MessageLocationRequest) {
