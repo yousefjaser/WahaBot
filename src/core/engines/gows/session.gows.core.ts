@@ -1,6 +1,6 @@
 import {
   isJidGroup,
-
+  isJidStatusBroadcast,
   jidNormalizedUser,
 } from '@adiwajshing/baileys';
 import * as grpc from '@grpc/grpc-js';
@@ -66,6 +66,8 @@ import { promisify } from 'util';
 
 import * as gows from './types';
 import MessageServiceClient = messages.MessageServiceClient;
+import { Jid } from '@waha/core/engines/const';
+import { StatusRequest, TextStatus } from '@waha/structures/status.dto';
 
 enum WhatsMeowEvent {
   CONNECTED = 'gows.ConnectedEventData',
@@ -407,11 +409,38 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     return this.messageResponse(jid, data);
   }
 
+  protected checkStatusRequest(request: StatusRequest) {
+    if (request.contacts && request.contacts?.length > 0) {
+      const msg =
+        "GOWS doesn't accept 'contacts'. Remove the field to send status to all contacts.";
+      throw new UnprocessableEntityException(msg);
+    }
+  }
+
+  public async sendTextStatus(status: TextStatus) {
+    this.checkStatusRequest(status);
+
+    const message = new messages.MessageRequest({
+      jid: Jid.BROADCAST,
+      text: status.text,
+      session: this.session,
+      backgroundColor: new messages.OptionalString({
+        value: status.backgroundColor,
+      }),
+      font: new messages.OptionalUInt32({
+        value: status.font,
+      }),
+    });
+    const response = await promisify(this.client.SendMessage)(message);
+    const data = response.toObject();
+    return this.messageResponse(Jid.BROADCAST, data);
+  }
+
   protected messageResponse(jid, data) {
     const id = buildMessageId({
       ID: data.id,
       IsFromMe: true,
-      IsGroup: isJidGroup(jid),
+      IsGroup: isJidGroup(jid) || isJidStatusBroadcast(jid),
       Chat: jid,
       Sender: this.me.id,
     });
