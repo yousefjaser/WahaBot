@@ -3,6 +3,7 @@ exclude: |
     ^src/dashboard/.*|
     ^src/core/engines/webjs/.*html|
     ^src/core/engines/gows/grpc/.*|
+    ^src/core/engines/gows/proto/.*|
     ^src/plus/engines/webjs/.*html|
     ^.yarn/.*
   )$
@@ -75,4 +76,5 @@ repos:
               ^src/core/engines/webjs/session.webjs.core.ts|
               ^src/core/engines/webjs/_lodash.js|
               ^tests/perf/.*|
+              ^scripts/.*|
           )$
