@@ -86,6 +86,7 @@ enum WhatsMeowEvent {
   CONNECTED = 'gows.ConnectedEventData',
   DISCONNECTED = 'events.Disconnected',
   KEEP_ALIVE_TIMEOUT = 'events.KeepAliveTimeout',
+  KEEP_ALIVE_RESTORED = 'events.KeepAliveRestored',
   QR_CHANNEL_ITEM = 'whatsmeow.QRChannelItem',
   MESSAGE = 'events.Message',
   RECEIPT = 'events.Receipt',
@@ -213,6 +214,11 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     events.on(WhatsMeowEvent.KEEP_ALIVE_TIMEOUT, () => {
       if (this.status != WAHASessionStatus.STARTING) {
         this.status = WAHASessionStatus.STARTING;
+      }
+    });
+    events.on(WhatsMeowEvent.KEEP_ALIVE_RESTORED, () => {
+      if (this.status != WAHASessionStatus.WORKING) {
+        this.status = WAHASessionStatus.WORKING;
       }
     });
     events.on(WhatsMeowEvent.QR_CHANNEL_ITEM, async (data) => {
