@@ -21,10 +21,7 @@ import {
   toCusFormat,
   toJID,
 } from '@waha/core/engines/noweb/session.noweb.core';
-import {
-  AvailableInPlusVersion,
-  NotImplementedByEngineError,
-} from '@waha/core/exceptions';
+import { AvailableInPlusVersion } from '@waha/core/exceptions';
 import { IMediaEngineProcessor } from '@waha/core/media/IMediaEngineProcessor';
 import { QR } from '@waha/core/QR';
 import {
@@ -817,7 +814,10 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     const id = buildMessageId(message);
     const body = this.extractBody(message.Message);
     const replyTo = null; // TODO: this.extractReplyTo(message.message);
-    const ack = null; // TODO: Extract
+    // TODO: Handle ack properly for stored messages
+    const ack = message.Info.IsFromMe
+      ? WAMessageAck.SERVER
+      : WAMessageAck.DEVICE;
 
     return {
       id: id,
