@@ -484,7 +484,11 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
 
   reply(request: MessageReplyRequest) {
     const options = this.getMessageOptions(request);
-    return this.whatsapp.sendMessage(request.chatId, request.text, options);
+    return this.whatsapp.sendMessage(
+      this.ensureSuffix(request.chatId),
+      request.text,
+      options,
+    );
   }
 
   sendImage(request: MessageImageRequest) {
@@ -504,12 +508,16 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       name: request.title,
     });
     const options = this.getMessageOptions(request);
-    return this.whatsapp.sendMessage(request.chatId, location, options);
+    return this.whatsapp.sendMessage(
+      this.ensureSuffix(request.chatId),
+      location,
+      options,
+    );
   }
 
   async forwardMessage(request: MessageForwardRequest): Promise<WAMessage> {
     const forwardMessage = this.recreateMessage(request.messageId);
-    const msg = await forwardMessage.forward(request.chatId);
+    const msg = await forwardMessage.forward(this.ensureSuffix(request.chatId));
     // Return "sent: true" for now
     // need to research how to get the data from WebJS
     // @ts-ignore
@@ -517,17 +525,23 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   }
 
   async sendSeen(request: SendSeenRequest) {
-    const chat: Chat = await this.whatsapp.getChatById(request.chatId);
+    const chat: Chat = await this.whatsapp.getChatById(
+      this.ensureSuffix(request.chatId),
+    );
     await chat.sendSeen();
   }
 
   async startTyping(request: ChatRequest) {
-    const chat: Chat = await this.whatsapp.getChatById(request.chatId);
+    const chat: Chat = await this.whatsapp.getChatById(
+      this.ensureSuffix(request.chatId),
+    );
     await chat.sendStateTyping();
   }
 
   async stopTyping(request: ChatRequest) {
-    const chat: Chat = await this.whatsapp.getChatById(request.chatId);
+    const chat: Chat = await this.whatsapp.getChatById(
+      this.ensureSuffix(request.chatId),
+    );
     await chat.clearState();
   }
 
@@ -663,7 +677,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   }
 
   async deleteChat(chatId) {
-    const chat = await this.whatsapp.getChatById(chatId);
+    const chat = await this.whatsapp.getChatById(this.ensureSuffix(chatId));
     return chat.delete();
   }
 
