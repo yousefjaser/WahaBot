@@ -709,6 +709,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       preview: preview,
       verified: newsletter.verified,
       role: role,
+      subscribersCount: null,
     };
   }
 
