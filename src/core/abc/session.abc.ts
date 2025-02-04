@@ -1,7 +1,12 @@
 import {
   Channel,
+  ChannelListResult,
+  ChannelMessage,
+  ChannelSearchByText,
+  ChannelSearchByView,
   CreateChannelRequest,
   ListChannelsQuery,
+  PreviewChannelMessages,
 } from '@waha/structures/channels.dto';
 import {
   ChatSummary,
@@ -661,6 +666,25 @@ export abstract class WhatsappSession {
   /**
    * Channels methods
    */
+  public searchChannelsByView(
+    query: ChannelSearchByView,
+  ): Promise<ChannelListResult> {
+    throw new NotImplementedByEngineError();
+  }
+
+  public searchChannelsByText(
+    query: ChannelSearchByText,
+  ): Promise<ChannelListResult> {
+    throw new NotImplementedByEngineError();
+  }
+
+  public async previewChannelMessages(
+    inviteCode: string,
+    query: PreviewChannelMessages,
+  ): Promise<ChannelMessage[]> {
+    throw new NotImplementedByEngineError();
+  }
+
   public channelsList(query: ListChannelsQuery): Promise<Channel[]> {
     throw new NotImplementedByEngineError();
   }
@@ -771,4 +795,14 @@ export function isNewsletter(jid: string) {
 
 export function getChannelInviteLink(code: string) {
   return `https://whatsapp.com/channel/${code}`;
+}
+
+export function parseChannelInviteLink(link: string): string {
+  // https://www.whatsapp.com/channel/123 => 123
+  const code = link.split('/').pop();
+  return code;
+}
+
+export function getPublicUrlFromDirectPath(directPath: string) {
+  return `https://pps.whatsapp.net${directPath}`;
 }
