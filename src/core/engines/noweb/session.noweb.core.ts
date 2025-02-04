@@ -1337,6 +1337,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       picture: picture,
       verified: newsletter.verification === 'VERIFIED',
       role: role,
+      subscribersCount: newsletter.subscribers,
     };
   }
 
