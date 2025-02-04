@@ -4,7 +4,7 @@ import {
   WhatsappSession,
 } from '@waha/core/abc/session.abc';
 import { LocalAuth } from '@waha/core/engines/webjs/LocalAuth';
-import { WebjsClient } from '@waha/core/engines/webjs/WebjsClient';
+import { WebjsClientCore } from '@waha/core/engines/webjs/WebjsClientCore';
 import {
   AvailableInPlusVersion,
   NotImplementedByEngineError,
@@ -15,9 +15,14 @@ import { splitAt } from '@waha/helpers';
 import { PairingCodeResponse } from '@waha/structures/auth.dto';
 import {
   Channel,
+  ChannelListResult,
+  ChannelMessage,
   ChannelRole,
+  ChannelSearchByText,
+  ChannelSearchByView,
   CreateChannelRequest,
   ListChannelsQuery,
+  PreviewChannelMessages,
 } from '@waha/structures/channels.dto';
 import {
   ChatSortField,
@@ -106,7 +111,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   private engineStateCheckDelayedJob: SingleDelayedJobRunner;
   private shouldRestart: boolean;
 
-  whatsapp: WebjsClient;
+  whatsapp: WebjsClientCore;
   protected qr: QR;
 
   public constructor(config) {
@@ -169,7 +174,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       rmMaxRetries: undefined,
     });
     this.addProxyConfig(clientOptions);
-    return new WebjsClient(clientOptions);
+    return new WebjsClientCore(clientOptions);
   }
 
   private restartClient() {
@@ -922,6 +927,25 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   /**
    * Channels methods
    */
+  public searchChannelsByView(
+    query: ChannelSearchByView,
+  ): Promise<ChannelListResult> {
+    throw new AvailableInPlusVersion();
+  }
+
+  public searchChannelsByText(
+    query: ChannelSearchByText,
+  ): Promise<ChannelListResult> {
+    throw new AvailableInPlusVersion();
+  }
+
+  public async previewChannelMessages(
+    inviteCode: string,
+    query: PreviewChannelMessages,
+  ): Promise<ChannelMessage[]> {
+    throw new AvailableInPlusVersion();
+  }
+
   protected ChatToChannel(chat: WEBJSChannel): Channel {
     // @ts-ignore
     const metadata = chat.channelMetadata;
@@ -938,6 +962,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       picture: null,
       verified: metadata.verified,
       role: role,
+      subscribersCount: null,
     };
   }
 
@@ -955,6 +980,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       picture: metadata.pictureUrl,
       verified: metadata.isVerified,
       role: role,
+      subscribersCount: metadata.subscribersCount,
     };
   }
 
@@ -965,6 +991,10 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       // @ts-ignore
       channels = channels.filter((channel) => channel.role === query.role);
     }
+
+    // Exclude GUEST, browser saves the data
+    // when we search channels or getting messages
+    channels = channels.filter((channel) => channel.role === 'GUEST');
 
     const promises = channels.map(async (channel) =>
       this.whatsapp.getProfilePicUrl(channel.id),
@@ -1211,7 +1241,10 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     this.events2.get(WAHAEvents.CALL_RECEIVED).switch(calls$);
   }
 
-  private async processIncomingMessage(message: Message, downloadMedia = true) {
+  protected async processIncomingMessage(
+    message: Message,
+    downloadMedia = true,
+  ) {
     if (downloadMedia) {
       try {
         message = await this.downloadMedia(message);
@@ -1267,7 +1300,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
 
   protected extractReplyTo(message: Message): ReplyToMessage | null {
     // @ts-ignore
-    const quotedMsg = message.rawData.quotedMsg;
+    const quotedMsg = message.rawData?.quotedMsg;
     if (!quotedMsg) {
       return;
     }
