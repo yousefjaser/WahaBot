@@ -7,6 +7,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -154,7 +155,8 @@ export class ChannelSearchByView extends ChannelSearch {
 
 export class ChannelSearchByText extends ChannelSearch {
   @IsString()
-  text: string = '';
+  @IsNotEmpty()
+  text: string = 'Donald Trump';
 
   @IsArray()
   @IsString({ each: true })
@@ -170,18 +172,20 @@ export class ChannelPagination {
 
 export class ChannelListResult {
   page: ChannelPagination;
-  channels: ChannelPublicInfo;
+  channels: ChannelPublicInfo[];
 }
 
 export class ChannelMessage {
   message: WAMessage;
-  reactions: ChannelMessageReaction[];
-  viewCount: number;
-}
 
-export class ChannelMessageReaction {
-  reaction: string;
-  count: number;
+  @ApiProperty({
+    example: { '👍': 10, '❤️': 5 },
+    type: Object,
+    additionalProperties: { type: 'number' },
+  })
+  reactions: { [emoji: string]: number };
+
+  viewCount: number;
 }
 
 export class PreviewChannelMessages {

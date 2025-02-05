@@ -109,15 +109,21 @@ export class ChannelsController {
   @ApiOperation({
     summary: 'Preview channel messages',
     description:
-      'You can use either id (123@newsletter) ' +
-      'OR invite code (https://www.whatsapp.com/channel/123) or (123)',
+      'You can use either ' +
+      'invite code (https://www.whatsapp.com/channel/123) or (123)' +
+      'OR' +
+      'Channel ID (123@newsletter).',
   })
-  previewChannelMessages(
+  async previewChannelMessages(
     @WorkingSessionParam session: WhatsappSession,
-    @Param('id') id: string,
+    @Param('id') code: string,
     @Query() query: PreviewChannelMessages,
   ): Promise<ChannelMessage[]> {
-    const inviteCode = isNewsletter(id) ? parseChannelInviteLink(id) : id;
+    if (isNewsletter(code)) {
+      const channel = await session.channelsGetChannel(code);
+      code = parseChannelInviteLink(channel.invite);
+    }
+    const inviteCode = parseChannelInviteLink(code);
     return session.previewChannelMessages(inviteCode, query);
   }
 

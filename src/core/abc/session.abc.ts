@@ -542,8 +542,16 @@ export abstract class WhatsappSession {
   }
 
   protected async refreshProfilePicture(id: string) {
+    let fn: Promise<string>;
+    if (isNewsletter(id)) {
+      fn = this.channelsGetChannel(id).then(
+        (channel: Channel) => channel.picture || channel.preview,
+      );
+    } else {
+      fn = this.fetchContactProfilePicture(id);
+    }
     this.profilePictures.del(id);
-    const url = await this.fetchContactProfilePicture(id).catch((err) => {
+    const url = await fn.catch((err) => {
       this.logger.warn('Error fetching profile picture');
       this.logger.warn(err, err.stack);
       return null;
