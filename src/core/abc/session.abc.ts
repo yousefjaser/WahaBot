@@ -331,22 +331,10 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public authorizeCode(code: string) {
-    throw new NotImplementedByEngineError();
-  }
-
   abstract getScreenshot(): Promise<Buffer>;
 
   public getSessionMeInfo(): MeInfo | null {
     return null;
-  }
-
-  public getCaptcha(): Promise<QR> {
-    throw new NotImplementedByEngineError();
-  }
-
-  public saveCaptcha(code: string) {
-    throw new NotImplementedByEngineError();
   }
 
   /**
