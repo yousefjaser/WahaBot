@@ -92,6 +92,7 @@ import {
   parseJsonList,
   statusToAck,
 } from '@waha/core/engines/gows/helpers';
+import { extractMediaContent } from '@waha/core/engines/noweb/utils';
 import {
   ChatSortField,
   ChatSummary,
@@ -1048,6 +1049,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     } else {
       ack = message.Info.IsFromMe ? WAMessageAck.SERVER : WAMessageAck.DEVICE;
     }
+    const mediaContent = extractMediaContent(message.Message);
 
     return {
       id: id,
@@ -1058,8 +1060,8 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
       // Media
-      hasMedia: Boolean(message.media),
-      media: message.media,
+      hasMedia: Boolean(mediaContent),
+      media: message.media || null,
       mediaUrl: message.media?.url,
       // @ts-ignore
       ack: ack,
@@ -1242,16 +1244,6 @@ export class GOWSEngineMediaProcessor implements IMediaEngineProcessor<any> {
     const content = extractMediaContent(message.Message);
     return content?.fileName;
   }
-}
-
-export function extractMediaContent(message: any) {
-  const mediaContent =
-    message?.documentMessage ||
-    message?.imageMessage ||
-    message?.videoMessage ||
-    message?.audioMessage ||
-    message?.stickerMessage;
-  return mediaContent;
 }
 
 function isMine(message) {
