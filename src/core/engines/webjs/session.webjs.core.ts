@@ -1297,9 +1297,9 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       body: message.body,
       // Media
       // @ts-ignore
-      hasMedia: Boolean(message.media),
+      hasMedia: Boolean(message.hasMedia),
       // @ts-ignore
-      media: message.media,
+      media: message.media || null,
       // @ts-ignore
       mediaUrl: message.media?.url,
       // @ts-ignore
