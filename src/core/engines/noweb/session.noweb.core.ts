@@ -1696,6 +1696,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const body = this.extractBody(message.message);
     const replyTo = this.extractReplyTo(message.message);
     const ack = message.ack || message.status - 1;
+    const mediaContent = extractMediaContent(message.message);
     return Promise.resolve({
       id: id,
       timestamp: ensureNumber(message.messageTimestamp),
@@ -1705,8 +1706,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
       // Media
-      hasMedia: Boolean(message.media),
-      media: message.media,
+      hasMedia: Boolean(mediaContent),
+      media: message.media || null,
       mediaUrl: message.media?.url,
       // @ts-ignore
       ack: ack,
