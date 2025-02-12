@@ -101,6 +101,7 @@ import {
   GetChatMessagesQuery,
 } from '@waha/structures/chats.dto';
 import { ContactQuery } from '@waha/structures/contacts.dto';
+import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
 import { PaginationParams, SortOrder } from '@waha/structures/pagination.dto';
 
 enum WhatsMeowEvent {
@@ -444,6 +445,40 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     }
   }
 
+  /**
+   * Profile methods
+   */
+  public async setProfileName(name: string): Promise<boolean> {
+    const request = new messages.ProfileNameRequest({
+      session: this.session,
+      name: name,
+    });
+    const response = await promisify(this.client.SetProfileName)(request);
+    response.toObject();
+    return true;
+  }
+
+  public async setProfileStatus(status: string): Promise<boolean> {
+    const request = new messages.ProfileStatusRequest({
+      session: this.session,
+      status: status,
+    });
+    const response = await promisify(this.client.SetProfileStatus)(request);
+    response.toObject();
+    return true;
+  }
+
+  protected setProfilePicture(file: BinaryFile | RemoteFile): Promise<boolean> {
+    throw new AvailableInPlusVersion();
+  }
+
+  protected deleteProfilePicture(): Promise<boolean> {
+    throw new AvailableInPlusVersion();
+  }
+
+  /**
+   * Other methods
+   */
   async sendText(request: MessageTextRequest) {
     const jid = toJID(this.ensureSuffix(request.chatId));
     const message = new messages.MessageRequest({
