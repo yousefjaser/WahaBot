@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { WsAdapter } from '@nestjs/platform-ws';
+import { WAHA_WEBHOOKS } from '@waha/structures/webhooks';
 import {
   getNestJSLogLevels,
   getPinoLogLevel,
@@ -15,7 +16,6 @@ import { WhatsappConfigService } from './config.service';
 import { AppModuleCore } from './core/app.module.core';
 import { SwaggerConfiguratorCore } from './core/SwaggerConfiguratorCore';
 import { AllExceptionsFilter } from './nestjs/AllExceptionsFilter';
-import { WAHA_WEBHOOKS } from './structures/webhooks.dto';
 import { getWAHAVersion, VERSION, WAHAVersion } from './version';
 
 const logger: Logger = pino({
