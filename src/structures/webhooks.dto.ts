@@ -198,6 +198,7 @@ export class WAHAWebhookMessageRevoked extends WAHAWebhook {
 export class WAHAWebhookStateChange extends WAHAWebhook {
   @ApiProperty({
     description: 'It’s an internal engine’s state, not session status.',
+    deprecated: true,
   })
   event = WAHAEvents.STATE_CHANGE;
 
@@ -207,6 +208,7 @@ export class WAHAWebhookStateChange extends WAHAWebhook {
 export class WAHAWebhookGroupJoin extends WAHAWebhook {
   @ApiProperty({
     description: 'Some one join a group.',
+    deprecated: true,
   })
   event = WAHAEvents.GROUP_JOIN;
 
@@ -216,6 +218,7 @@ export class WAHAWebhookGroupJoin extends WAHAWebhook {
 export class WAHAWebhookGroupLeave extends WAHAWebhook {
   @ApiProperty({
     description: 'Some one left a group.',
+    deprecated: true,
   })
   event = WAHAEvents.GROUP_LEAVE;
 
