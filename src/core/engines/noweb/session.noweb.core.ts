@@ -143,6 +143,7 @@ import {
 import {
   CreateGroupRequest,
   ParticipantsRequest,
+  SettingsSecurityChangeInfo,
 } from '../../../structures/groups.dto';
 import {
   WAHAChatPresences,
@@ -1198,11 +1199,35 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
 
   public async getGroup(id) {
     const groups = await this.getGroups({});
-    return groups[id];
+    const group = groups[id];
+    if (!group) {
+      throw new Error(`Group with id '${id}' not found`);
+    }
+    return group;
   }
 
   public async deleteGroup(id) {
     throw new NotImplementedByEngineError();
+  }
+
+  public async getInfoAdminsOnly(id): Promise<SettingsSecurityChangeInfo> {
+    const group = await this.getGroup(id);
+    return { adminsOnly: group.restrict };
+  }
+
+  public async setInfoAdminsOnly(id, value) {
+    const setting = value ? 'locked' : 'unlocked';
+    return await this.sock.groupSettingUpdate(id, setting);
+  }
+
+  public async getMessagesAdminsOnly(id): Promise<SettingsSecurityChangeInfo> {
+    const group = await this.getGroup(id);
+    return { adminsOnly: group.announce };
+  }
+
+  public async setMessagesAdminsOnly(id, value) {
+    const setting = value ? 'announcement' : 'not_announcement';
+    return await this.sock.groupSettingUpdate(id, setting);
   }
 
   public async leaveGroup(id) {
