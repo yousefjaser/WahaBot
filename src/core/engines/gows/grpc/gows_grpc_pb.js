@@ -411,6 +411,17 @@ function deserialize_messages_SessionStateResponse(buffer_arg) {
   return gows_pb.SessionStateResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_messages_SetPictureRequest(arg) {
+  if (!(arg instanceof gows_pb.SetPictureRequest)) {
+    throw new Error('Expected argument of type messages.SetPictureRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_messages_SetPictureRequest(buffer_arg) {
+  return gows_pb.SetPictureRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_messages_SetProfilePictureRequest(arg) {
   if (!(arg instanceof gows_pb.SetProfilePictureRequest)) {
     throw new Error('Expected argument of type messages.SetProfilePictureRequest');
@@ -555,6 +566,20 @@ setProfileName: {
     responseType: gows_pb.Empty,
     requestSerialize: serialize_messages_SetProfilePictureRequest,
     requestDeserialize: deserialize_messages_SetProfilePictureRequest,
+    responseSerialize: serialize_messages_Empty,
+    responseDeserialize: deserialize_messages_Empty,
+  },
+  //
+// Groups
+//
+setGroupPicture: {
+    path: '/messages.MessageService/SetGroupPicture',
+    requestStream: false,
+    responseStream: false,
+    requestType: gows_pb.SetPictureRequest,
+    responseType: gows_pb.Empty,
+    requestSerialize: serialize_messages_SetPictureRequest,
+    requestDeserialize: deserialize_messages_SetPictureRequest,
     responseSerialize: serialize_messages_Empty,
     responseDeserialize: deserialize_messages_Empty,
   },
