@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -64,6 +66,7 @@ export class GroupsController {
   }
 
   @Post('join')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @ApiOperation({ summary: 'Join group via code' })
   async joinGroup(
@@ -87,6 +90,7 @@ export class GroupsController {
   }
 
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @ApiOperation({ summary: 'Refresh groups from the server.' })
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -117,6 +121,7 @@ export class GroupsController {
   }
 
   @Post(':id/leave')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({ summary: 'Leave the group.' })
@@ -270,6 +275,7 @@ export class GroupsController {
   }
 
   @Post(':id/invite-code/revoke')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({
@@ -295,6 +301,7 @@ export class GroupsController {
   }
 
   @Post(':id/participants/add')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({ summary: 'Add participants' })
@@ -307,6 +314,7 @@ export class GroupsController {
   }
 
   @Post(':id/participants/remove')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({
@@ -321,6 +329,7 @@ export class GroupsController {
   }
 
   @Post(':id/admin/promote')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({ summary: 'Promote participants to admin users.' })
@@ -333,6 +342,7 @@ export class GroupsController {
   }
 
   @Post(':id/admin/demote')
+  @HttpCode(HttpStatus.OK)
   @SessionApiParam
   @GroupIdApiParam
   @ApiOperation({ summary: 'Demotes participants to regular users.' })
