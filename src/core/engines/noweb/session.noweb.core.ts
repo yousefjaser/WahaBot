@@ -1764,7 +1764,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       timestamp: ensureNumber(message.messageTimestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.key.fromMe,
-      body: body,
+      body: body || null,
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
       // Media
@@ -1786,21 +1786,28 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     if (!message) {
       return null;
     }
-    let body = message.conversation;
+    const content = extractMessageContent(message);
+    if (!content) {
+      return null;
+    }
+    let body = content.conversation || null;
     if (!body) {
       // Some of the messages have no conversation, but instead have text in extendedTextMessage
       // https://github.com/devlikeapro/waha/issues/90
-      body = message.extendedTextMessage?.text;
+      body = content.extendedTextMessage?.text;
     }
     if (!body) {
       // Populate from caption
-      const mediaContent = extractMediaContent(message);
+      const mediaContent = extractMediaContent(content);
       // @ts-ignore - AudioMessage doesn't have caption field
       body = mediaContent?.caption;
     }
     // Response for buttons
     if (!body) {
-      body = message.templateButtonReplyMessage?.selectedDisplayText;
+      body = content.templateButtonReplyMessage?.selectedDisplayText;
+    }
+    if (!body) {
+      body = content.buttonsResponseMessage?.selectedDisplayText;
     }
     return body;
   }
