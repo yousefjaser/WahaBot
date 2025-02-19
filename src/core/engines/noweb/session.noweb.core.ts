@@ -86,6 +86,7 @@ import {
   PollVote,
   PollVotePayload,
   WAMessageAckBody,
+  WAMessageRevokedBody,
 } from '@waha/structures/webhooks.dto';
 import { LoggerBuilder } from '@waha/utils/logging';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
@@ -1475,6 +1476,24 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.events2.get(WAHAEvents.MESSAGE).switch(messagesFromOthers$);
     this.events2.get(WAHAEvents.MESSAGE_ANY).switch(messagesFromAll$);
 
+    const messagesRevoked$ = messagesUpsert$.pipe(
+      // @ts-ignore
+      filter(
+        (message) =>
+          message.message.protocolMessage?.type ===
+          proto.Message.ProtocolMessage.Type.REVOKE,
+      ),
+      mergeMap(async (message): Promise<WAMessageRevokedBody> => {
+        const afterMessage = await this.toWAMessage(message);
+        return {
+          after: afterMessage,
+          before: null,
+          _data: message,
+        };
+      }),
+    );
+    this.events2.get(WAHAEvents.MESSAGE_REVOKED).switch(messagesRevoked$);
+
     //
     // Message Reactions
     //
@@ -1732,6 +1751,12 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     if (message.message.reactionMessage) return;
     // Ignore poll votes, we have dedicated handler for that
     if (message.message.pollUpdateMessage) return;
+    // Ignore revoke, we have a dedicated handler for that
+    if (
+      message.message.protocolMessage?.type ===
+      proto.Message.ProtocolMessage.Type.REVOKE
+    )
+      return;
 
     if (downloadMedia) {
       try {
