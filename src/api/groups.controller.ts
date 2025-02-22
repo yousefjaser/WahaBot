@@ -30,6 +30,8 @@ import { parseGroupInviteLink, WhatsappSession } from '../core/abc/session.abc';
 import {
   CreateGroupRequest,
   DescriptionRequest,
+  GroupField,
+  GroupsListFields,
   GroupsPaginationParams,
   JoinGroupRequest,
   JoinGroupResponse,
@@ -82,11 +84,14 @@ export class GroupsController {
   @SessionApiParam
   @ApiOperation({ summary: 'Get all groups.' })
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  getGroups(
+  async getGroups(
     @WorkingSessionParam session: WhatsappSession,
     @Query() pagination: GroupsPaginationParams,
+    @Query() fields: GroupsListFields,
   ) {
-    return session.getGroups(pagination);
+    let groups: any = await session.getGroups(pagination);
+    groups = session.filterGroupsFields(groups, fields);
+    return groups;
   }
 
   @Post('refresh')

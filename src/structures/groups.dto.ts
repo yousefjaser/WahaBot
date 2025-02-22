@@ -74,6 +74,22 @@ export class JoinGroupResponse {
   id: string;
 }
 
+export enum GroupField {
+  NONE = '',
+  PARTICIPANTS = 'participants',
+}
+
+export class GroupsListFields {
+  @IsOptional()
+  @ApiProperty({
+    description: 'Exclude fields',
+    enum: GroupField,
+    isArray: true,
+  })
+  @IsEnum(GroupField, { each: true })
+  exclude: string[];
+}
+
 export enum GroupSortField {
   ID = 'id',
   SUBJECT = 'subject',

@@ -1191,6 +1191,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return lodash.keyBy(groups, 'id');
   }
 
+  protected removeGroupsFieldParticipant(group: any) {
+    delete group.participants;
+  }
+
   public async refreshGroups(): Promise<boolean> {
     this.store.resetGroupsCache();
     await this.store.getGroups({});

@@ -71,6 +71,8 @@ import {
 } from '../../structures/enums.dto';
 import {
   CreateGroupRequest,
+  GroupField,
+  GroupsListFields,
   GroupsPaginationParams,
   ParticipantsRequest,
   SettingsSecurityChangeInfo,
@@ -621,8 +623,20 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
-  public getGroups(pagination: PaginationParams) {
+  public getGroups(pagination: PaginationParams): Promise<any> {
     throw new NotImplementedByEngineError();
+  }
+
+  public filterGroupsFields(data: any, fields: GroupsListFields) {
+    const groups: any[] = Array.isArray(data) ? data : Object.values(data);
+    if (fields.exclude?.includes(GroupField.PARTICIPANTS)) {
+      groups.forEach((group) => this.removeGroupsFieldParticipant(group));
+    }
+    return data;
+  }
+
+  protected removeGroupsFieldParticipant(group: any) {
+    return;
   }
 
   public refreshGroups(): Promise<boolean> {

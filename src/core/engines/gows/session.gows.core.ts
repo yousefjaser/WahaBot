@@ -688,6 +688,10 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     return paginator.apply(data);
   }
 
+  protected removeGroupsFieldParticipant(group: any) {
+    delete group.Participants;
+  }
+
   public async refreshGroups(): Promise<boolean> {
     const req = this.session;
     await promisify(this.client.FetchGroups)(req);
