@@ -1786,6 +1786,11 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       proto.Message.ProtocolMessage.Type.REVOKE
     )
       return;
+    if (
+      message.message.protocolMessage?.type ===
+      proto.Message.ProtocolMessage.Type.EPHEMERAL_SYNC_RESPONSE
+    )
+      return;
 
     if (downloadMedia) {
       try {
