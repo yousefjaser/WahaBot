@@ -385,7 +385,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     this.listenConnectionEvents();
     this.subscribeEngineEvents2();
     this.listenContactsUpdatePictureProfile();
-    this.enableAutoRestart();
+    // this.enableAutoRestart();
   }
 
   private enableAutoRestart() {
