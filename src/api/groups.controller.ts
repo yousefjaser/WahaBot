@@ -139,6 +139,7 @@ export class GroupsController {
 
   @Get(':id/picture')
   @SessionApiParam
+  @GroupIdApiParam
   @ApiOperation({ summary: 'Get group picture' })
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async getChatPicture(
