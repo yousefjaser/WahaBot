@@ -631,11 +631,11 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   }
 
   startTyping(chat: ChatRequest) {
-    throw new Error('Method not implemented.');
+    return this.setPresence(WAHAPresenceStatus.TYPING, chat.chatId);
   }
 
   stopTyping(chat: ChatRequest) {
-    throw new Error('Method not implemented.');
+    return this.setPresence(WAHAPresenceStatus.PAUSED, chat.chatId);
   }
 
   /**
