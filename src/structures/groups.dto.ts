@@ -85,6 +85,7 @@ export class GroupsListFields {
     description: 'Exclude fields',
     enum: GroupField,
     isArray: true,
+    required: false,
   })
   @IsEnum(GroupField, { each: true })
   exclude: string[];
