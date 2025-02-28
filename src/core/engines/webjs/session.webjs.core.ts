@@ -510,6 +510,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     const options = {
       // It's fine to sent just ids instead of Contact object
       mentions: request.mentions as unknown as string[],
+      linkPreview: request.linkPreview,
     };
     return message.edit(request.text, options);
   }
