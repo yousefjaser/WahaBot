@@ -1047,7 +1047,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
 
     // Exclude GUEST, browser saves the data
     // when we search channels or getting messages
-    channels = channels.filter((channel) => channel.role === 'GUEST');
+    channels = channels.filter((channel) => channel.role !== 'GUEST');
 
     const promises = channels.map(async (channel) =>
       this.whatsapp.getProfilePicUrl(channel.id),
