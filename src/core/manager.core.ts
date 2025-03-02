@@ -45,9 +45,11 @@ import { LocalSessionAuthRepository } from './storage/LocalSessionAuthRepository
 import { LocalStoreCore } from './storage/LocalStoreCore';
 
 export class OnlyDefaultSessionIsAllowed extends UnprocessableEntityException {
-  constructor() {
+  constructor(name: string) {
+    const encoded = Buffer.from(name, 'utf-8').toString('base64');
     super(
-      `WAHA Core support only 'default' session. If you want to run more then one WhatsApp account - please get WAHA PLUS version. Check this out: ${DOCS_URL}`,
+      `WAHA Core support only 'default' session. You tried to access '${name}' session (base64: ${encoded}). ` +
+        `If you want to run more then one WhatsApp account - please get WAHA PLUS version. Check this out: ${DOCS_URL}`,
     );
   }
 }
@@ -115,7 +117,7 @@ export class SessionManagerCore extends SessionManager implements OnModuleInit {
 
   private onlyDefault(name: string) {
     if (name !== this.DEFAULT) {
-      throw new OnlyDefaultSessionIsAllowed();
+      throw new OnlyDefaultSessionIsAllowed(name);
     }
   }
 
