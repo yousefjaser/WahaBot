@@ -1323,7 +1323,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
    * Status methods
    */
   public async sendTextStatus(status: TextStatus) {
-    const message = { text: status.text };
+    const message = {
+      text: status.text,
+      linkPreview: this.getLinkPreview(status),
+    };
     const jids = await this.prepareJidsForStatus(status.contacts);
     const options = {
       backgroundColor: status.backgroundColor,
