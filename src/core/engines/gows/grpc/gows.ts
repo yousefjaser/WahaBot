@@ -2521,6 +2521,7 @@ export namespace messages {
             media?: Media;
             backgroundColor?: OptionalString;
             font?: OptionalUInt32;
+            linkPreview?: boolean;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -2542,6 +2543,9 @@ export namespace messages {
                 }
                 if ("font" in data && data.font != undefined) {
                     this.font = data.font;
+                }
+                if ("linkPreview" in data && data.linkPreview != undefined) {
+                    this.linkPreview = data.linkPreview;
                 }
             }
         }
@@ -2593,6 +2597,12 @@ export namespace messages {
         get has_font() {
             return pb_1.Message.getField(this, 6) != null;
         }
+        get linkPreview() {
+            return pb_1.Message.getFieldWithDefault(this, 7, false) as boolean;
+        }
+        set linkPreview(value: boolean) {
+            pb_1.Message.setField(this, 7, value);
+        }
         static fromObject(data: {
             session?: ReturnType<typeof Session.prototype.toObject>;
             jid?: string;
@@ -2600,6 +2610,7 @@ export namespace messages {
             media?: ReturnType<typeof Media.prototype.toObject>;
             backgroundColor?: ReturnType<typeof OptionalString.prototype.toObject>;
             font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
+            linkPreview?: boolean;
         }): MessageRequest {
             const message = new MessageRequest({});
             if (data.session != null) {
@@ -2620,6 +2631,9 @@ export namespace messages {
             if (data.font != null) {
                 message.font = OptionalUInt32.fromObject(data.font);
             }
+            if (data.linkPreview != null) {
+                message.linkPreview = data.linkPreview;
+            }
             return message;
         }
         toObject() {
@@ -2630,6 +2644,7 @@ export namespace messages {
                 media?: ReturnType<typeof Media.prototype.toObject>;
                 backgroundColor?: ReturnType<typeof OptionalString.prototype.toObject>;
                 font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
+                linkPreview?: boolean;
             } = {};
             if (this.session != null) {
                 data.session = this.session.toObject();
@@ -2649,6 +2664,9 @@ export namespace messages {
             if (this.font != null) {
                 data.font = this.font.toObject();
             }
+            if (this.linkPreview != null) {
+                data.linkPreview = this.linkPreview;
+            }
             return data;
         }
         serialize(): Uint8Array;
@@ -2667,6 +2685,8 @@ export namespace messages {
                 writer.writeMessage(5, this.backgroundColor, () => this.backgroundColor.serialize(writer));
             if (this.has_font)
                 writer.writeMessage(6, this.font, () => this.font.serialize(writer));
+            if (this.linkPreview != false)
+                writer.writeBool(7, this.linkPreview);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -2693,6 +2713,9 @@ export namespace messages {
                         break;
                     case 6:
                         reader.readMessage(message.font, () => message.font = OptionalUInt32.deserialize(reader));
+                        break;
+                    case 7:
+                        message.linkPreview = reader.readBool();
                         break;
                     default: reader.skipField();
                 }

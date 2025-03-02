@@ -530,6 +530,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       jid: jid,
       text: request.text,
       session: this.session,
+      linkPreview: request.linkPreview ?? true,
     });
     const response = await promisify(this.client.SendMessage)(message);
     const data = response.toObject();
@@ -557,6 +558,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       font: new messages.OptionalUInt32({
         value: status.font,
       }),
+      linkPreview: status.linkPreview ?? true,
     });
     const response = await promisify(this.client.SendMessage)(message);
     const data = response.toObject();

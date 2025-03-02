@@ -6256,7 +6256,8 @@ proto.messages.MessageRequest.toObject = function(includeInstance, msg) {
     text: jspb.Message.getFieldWithDefault(msg, 3, ""),
     media: (f = msg.getMedia()) && proto.messages.Media.toObject(includeInstance, f),
     backgroundcolor: (f = msg.getBackgroundcolor()) && proto.messages.OptionalString.toObject(includeInstance, f),
-    font: (f = msg.getFont()) && proto.messages.OptionalUInt32.toObject(includeInstance, f)
+    font: (f = msg.getFont()) && proto.messages.OptionalUInt32.toObject(includeInstance, f),
+    linkpreview: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -6320,6 +6321,10 @@ proto.messages.MessageRequest.deserializeBinaryFromReader = function(msg, reader
       var value = new proto.messages.OptionalUInt32;
       reader.readMessage(value,proto.messages.OptionalUInt32.deserializeBinaryFromReader);
       msg.setFont(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setLinkpreview(value);
       break;
     default:
       reader.skipField();
@@ -6394,6 +6399,13 @@ proto.messages.MessageRequest.serializeBinaryToWriter = function(message, writer
       6,
       f,
       proto.messages.OptionalUInt32.serializeBinaryToWriter
+    );
+  }
+  f = message.getLinkpreview();
+  if (f) {
+    writer.writeBool(
+      7,
+      f
     );
   }
 };
@@ -6580,6 +6592,24 @@ proto.messages.MessageRequest.prototype.clearFont = function() {
  */
 proto.messages.MessageRequest.prototype.hasFont = function() {
   return jspb.Message.getField(this, 6) != null;
+};
+
+
+/**
+ * optional bool linkPreview = 7;
+ * @return {boolean}
+ */
+proto.messages.MessageRequest.prototype.getLinkpreview = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.messages.MessageRequest} returns this
+ */
+proto.messages.MessageRequest.prototype.setLinkpreview = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 
