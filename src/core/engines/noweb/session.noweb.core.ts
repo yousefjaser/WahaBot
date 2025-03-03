@@ -16,6 +16,7 @@ import makeWASocket, {
   isRealMessage,
   jidNormalizedUser,
   makeCacheableSignalKeyStore,
+  MiscMessageGenerationOptions,
   NewsletterMetadata,
   normalizeMessageContent,
   PresenceData,
@@ -702,6 +703,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       linkPreview: this.getLinkPreview(request),
     };
     const options = await this.getMessageOptions(request);
+    options.linkPreviewHighQuality = request.linkPreviewHighQuality;
     return this.sock.sendMessage(chatId, message, options);
   }
 
@@ -723,6 +725,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       mentions: request.mentions?.map(toJID),
       edit: key,
       linkPreview: this.getLinkPreview(request),
+      linkPreviewHighQuality: request.linkPreviewHighQuality,
     };
     return this.sock.sendMessage(jid, message);
   }
@@ -1328,10 +1331,11 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       linkPreview: this.getLinkPreview(status),
     };
     const jids = await this.prepareJidsForStatus(status.contacts);
-    const options = {
+    const options: MiscMessageGenerationOptions = {
       backgroundColor: status.backgroundColor,
       font: status.font,
       statusJidList: jids,
+      linkPreviewHighQuality: status.linkPreviewHighQuality,
     };
 
     return await this.sock.sendMessage(BROADCAST_ID, message, options);
