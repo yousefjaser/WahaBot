@@ -430,7 +430,12 @@ export class NowebPersistentStore implements INowebStore {
   }
 
   async loadMessage(jid: string, id: string) {
-    const data = await this.messagesRepo.getByJidById(jid, id);
+    let data;
+    if (!jid) {
+      data = await this.messagesRepo.getById(id);
+    } else {
+      data = await this.messagesRepo.getByJidById(jid, id);
+    }
     if (!data) {
       return null;
     }
