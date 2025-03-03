@@ -6257,7 +6257,8 @@ proto.messages.MessageRequest.toObject = function(includeInstance, msg) {
     media: (f = msg.getMedia()) && proto.messages.Media.toObject(includeInstance, f),
     backgroundcolor: (f = msg.getBackgroundcolor()) && proto.messages.OptionalString.toObject(includeInstance, f),
     font: (f = msg.getFont()) && proto.messages.OptionalUInt32.toObject(includeInstance, f),
-    linkpreview: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
+    linkpreview: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
+    linkpreviewhighquality: jspb.Message.getBooleanFieldWithDefault(msg, 8, false)
   };
 
   if (includeInstance) {
@@ -6325,6 +6326,10 @@ proto.messages.MessageRequest.deserializeBinaryFromReader = function(msg, reader
     case 7:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setLinkpreview(value);
+      break;
+    case 8:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setLinkpreviewhighquality(value);
       break;
     default:
       reader.skipField();
@@ -6405,6 +6410,13 @@ proto.messages.MessageRequest.serializeBinaryToWriter = function(message, writer
   if (f) {
     writer.writeBool(
       7,
+      f
+    );
+  }
+  f = message.getLinkpreviewhighquality();
+  if (f) {
+    writer.writeBool(
+      8,
       f
     );
   }
@@ -6610,6 +6622,24 @@ proto.messages.MessageRequest.prototype.getLinkpreview = function() {
  */
 proto.messages.MessageRequest.prototype.setLinkpreview = function(value) {
   return jspb.Message.setProto3BooleanField(this, 7, value);
+};
+
+
+/**
+ * optional bool linkPreviewHighQuality = 8;
+ * @return {boolean}
+ */
+proto.messages.MessageRequest.prototype.getLinkpreviewhighquality = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 8, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.messages.MessageRequest} returns this
+ */
+proto.messages.MessageRequest.prototype.setLinkpreviewhighquality = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 8, value);
 };
 
 

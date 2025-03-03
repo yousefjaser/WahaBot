@@ -2522,6 +2522,7 @@ export namespace messages {
             backgroundColor?: OptionalString;
             font?: OptionalUInt32;
             linkPreview?: boolean;
+            linkPreviewHighQuality?: boolean;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -2546,6 +2547,9 @@ export namespace messages {
                 }
                 if ("linkPreview" in data && data.linkPreview != undefined) {
                     this.linkPreview = data.linkPreview;
+                }
+                if ("linkPreviewHighQuality" in data && data.linkPreviewHighQuality != undefined) {
+                    this.linkPreviewHighQuality = data.linkPreviewHighQuality;
                 }
             }
         }
@@ -2603,6 +2607,12 @@ export namespace messages {
         set linkPreview(value: boolean) {
             pb_1.Message.setField(this, 7, value);
         }
+        get linkPreviewHighQuality() {
+            return pb_1.Message.getFieldWithDefault(this, 8, false) as boolean;
+        }
+        set linkPreviewHighQuality(value: boolean) {
+            pb_1.Message.setField(this, 8, value);
+        }
         static fromObject(data: {
             session?: ReturnType<typeof Session.prototype.toObject>;
             jid?: string;
@@ -2611,6 +2621,7 @@ export namespace messages {
             backgroundColor?: ReturnType<typeof OptionalString.prototype.toObject>;
             font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
             linkPreview?: boolean;
+            linkPreviewHighQuality?: boolean;
         }): MessageRequest {
             const message = new MessageRequest({});
             if (data.session != null) {
@@ -2634,6 +2645,9 @@ export namespace messages {
             if (data.linkPreview != null) {
                 message.linkPreview = data.linkPreview;
             }
+            if (data.linkPreviewHighQuality != null) {
+                message.linkPreviewHighQuality = data.linkPreviewHighQuality;
+            }
             return message;
         }
         toObject() {
@@ -2645,6 +2659,7 @@ export namespace messages {
                 backgroundColor?: ReturnType<typeof OptionalString.prototype.toObject>;
                 font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
                 linkPreview?: boolean;
+                linkPreviewHighQuality?: boolean;
             } = {};
             if (this.session != null) {
                 data.session = this.session.toObject();
@@ -2667,6 +2682,9 @@ export namespace messages {
             if (this.linkPreview != null) {
                 data.linkPreview = this.linkPreview;
             }
+            if (this.linkPreviewHighQuality != null) {
+                data.linkPreviewHighQuality = this.linkPreviewHighQuality;
+            }
             return data;
         }
         serialize(): Uint8Array;
@@ -2687,6 +2705,8 @@ export namespace messages {
                 writer.writeMessage(6, this.font, () => this.font.serialize(writer));
             if (this.linkPreview != false)
                 writer.writeBool(7, this.linkPreview);
+            if (this.linkPreviewHighQuality != false)
+                writer.writeBool(8, this.linkPreviewHighQuality);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -2716,6 +2736,9 @@ export namespace messages {
                         break;
                     case 7:
                         message.linkPreview = reader.readBool();
+                        break;
+                    case 8:
+                        message.linkPreviewHighQuality = reader.readBool();
                         break;
                     default: reader.skipField();
                 }
