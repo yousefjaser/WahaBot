@@ -3901,6 +3901,145 @@ export namespace messages {
             return CheckPhonesResponse.deserialize(bytes);
         }
     }
+    export class RevokeMessageRequest extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            session?: Session;
+            jid?: string;
+            sender?: string;
+            messageId?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("session" in data && data.session != undefined) {
+                    this.session = data.session;
+                }
+                if ("jid" in data && data.jid != undefined) {
+                    this.jid = data.jid;
+                }
+                if ("sender" in data && data.sender != undefined) {
+                    this.sender = data.sender;
+                }
+                if ("messageId" in data && data.messageId != undefined) {
+                    this.messageId = data.messageId;
+                }
+            }
+        }
+        get session() {
+            return pb_1.Message.getWrapperField(this, Session, 1) as Session;
+        }
+        set session(value: Session) {
+            pb_1.Message.setWrapperField(this, 1, value);
+        }
+        get has_session() {
+            return pb_1.Message.getField(this, 1) != null;
+        }
+        get jid() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set jid(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get sender() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set sender(value: string) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        get messageId() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set messageId(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        static fromObject(data: {
+            session?: ReturnType<typeof Session.prototype.toObject>;
+            jid?: string;
+            sender?: string;
+            messageId?: string;
+        }): RevokeMessageRequest {
+            const message = new RevokeMessageRequest({});
+            if (data.session != null) {
+                message.session = Session.fromObject(data.session);
+            }
+            if (data.jid != null) {
+                message.jid = data.jid;
+            }
+            if (data.sender != null) {
+                message.sender = data.sender;
+            }
+            if (data.messageId != null) {
+                message.messageId = data.messageId;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                session?: ReturnType<typeof Session.prototype.toObject>;
+                jid?: string;
+                sender?: string;
+                messageId?: string;
+            } = {};
+            if (this.session != null) {
+                data.session = this.session.toObject();
+            }
+            if (this.jid != null) {
+                data.jid = this.jid;
+            }
+            if (this.sender != null) {
+                data.sender = this.sender;
+            }
+            if (this.messageId != null) {
+                data.messageId = this.messageId;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.has_session)
+                writer.writeMessage(1, this.session, () => this.session.serialize(writer));
+            if (this.jid.length)
+                writer.writeString(2, this.jid);
+            if (this.sender.length)
+                writer.writeString(3, this.sender);
+            if (this.messageId.length)
+                writer.writeString(4, this.messageId);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): RevokeMessageRequest {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new RevokeMessageRequest();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        reader.readMessage(message.session, () => message.session = Session.deserialize(reader));
+                        break;
+                    case 2:
+                        message.jid = reader.readString();
+                        break;
+                    case 3:
+                        message.sender = reader.readString();
+                        break;
+                    case 4:
+                        message.messageId = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): RevokeMessageRequest {
+            return RevokeMessageRequest.deserialize(bytes);
+        }
+    }
     export class NewsletterListRequest extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
@@ -6841,24 +6980,6 @@ export namespace messages {
                 responseSerialize: (message: JsonList) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => JsonList.deserialize(new Uint8Array(bytes))
             },
-            SendMessage: {
-                path: "/messages.MessageService/SendMessage",
-                requestStream: false,
-                responseStream: false,
-                requestSerialize: (message: MessageRequest) => Buffer.from(message.serialize()),
-                requestDeserialize: (bytes: Buffer) => MessageRequest.deserialize(new Uint8Array(bytes)),
-                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
-                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
-            },
-            SendReaction: {
-                path: "/messages.MessageService/SendReaction",
-                requestStream: false,
-                responseStream: false,
-                requestSerialize: (message: MessageReaction) => Buffer.from(message.serialize()),
-                requestDeserialize: (bytes: Buffer) => MessageReaction.deserialize(new Uint8Array(bytes)),
-                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
-                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
-            },
             GetProfilePicture: {
                 path: "/messages.MessageService/GetProfilePicture",
                 requestStream: false,
@@ -6895,6 +7016,33 @@ export namespace messages {
                 responseSerialize: (message: Empty) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => Empty.deserialize(new Uint8Array(bytes))
             },
+            CheckPhones: {
+                path: "/messages.MessageService/CheckPhones",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: CheckPhonesRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => CheckPhonesRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: CheckPhonesResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => CheckPhonesResponse.deserialize(new Uint8Array(bytes))
+            },
+            SendMessage: {
+                path: "/messages.MessageService/SendMessage",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: MessageRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => MessageRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
+            },
+            SendReaction: {
+                path: "/messages.MessageService/SendReaction",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: MessageReaction) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => MessageReaction.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
+            },
             MarkRead: {
                 path: "/messages.MessageService/MarkRead",
                 requestStream: false,
@@ -6904,14 +7052,14 @@ export namespace messages {
                 responseSerialize: (message: Empty) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => Empty.deserialize(new Uint8Array(bytes))
             },
-            CheckPhones: {
-                path: "/messages.MessageService/CheckPhones",
+            RevokeMessage: {
+                path: "/messages.MessageService/RevokeMessage",
                 requestStream: false,
                 responseStream: false,
-                requestSerialize: (message: CheckPhonesRequest) => Buffer.from(message.serialize()),
-                requestDeserialize: (bytes: Buffer) => CheckPhonesRequest.deserialize(new Uint8Array(bytes)),
-                responseSerialize: (message: CheckPhonesResponse) => Buffer.from(message.serialize()),
-                responseDeserialize: (bytes: Buffer) => CheckPhonesResponse.deserialize(new Uint8Array(bytes))
+                requestSerialize: (message: RevokeMessageRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => RevokeMessageRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
             },
             GetSubscribedNewsletters: {
                 path: "/messages.MessageService/GetSubscribedNewsletters",
@@ -7064,14 +7212,15 @@ export namespace messages {
         abstract SetGroupLocked(call: grpc_1.ServerUnaryCall<JidBoolRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract SetGroupAnnounce(call: grpc_1.ServerUnaryCall<JidBoolRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract UpdateGroupParticipants(call: grpc_1.ServerUnaryCall<UpdateParticipantsRequest, JsonList>, callback: grpc_1.sendUnaryData<JsonList>): void;
-        abstract SendMessage(call: grpc_1.ServerUnaryCall<MessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
-        abstract SendReaction(call: grpc_1.ServerUnaryCall<MessageReaction, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract GetProfilePicture(call: grpc_1.ServerUnaryCall<ProfilePictureRequest, ProfilePictureResponse>, callback: grpc_1.sendUnaryData<ProfilePictureResponse>): void;
         abstract SendPresence(call: grpc_1.ServerUnaryCall<PresenceRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract SendChatPresence(call: grpc_1.ServerUnaryCall<ChatPresenceRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract SubscribePresence(call: grpc_1.ServerUnaryCall<SubscribePresenceRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
-        abstract MarkRead(call: grpc_1.ServerUnaryCall<MarkReadRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract CheckPhones(call: grpc_1.ServerUnaryCall<CheckPhonesRequest, CheckPhonesResponse>, callback: grpc_1.sendUnaryData<CheckPhonesResponse>): void;
+        abstract SendMessage(call: grpc_1.ServerUnaryCall<MessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
+        abstract SendReaction(call: grpc_1.ServerUnaryCall<MessageReaction, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
+        abstract MarkRead(call: grpc_1.ServerUnaryCall<MarkReadRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
+        abstract RevokeMessage(call: grpc_1.ServerUnaryCall<RevokeMessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract GetSubscribedNewsletters(call: grpc_1.ServerUnaryCall<NewsletterListRequest, NewsletterList>, callback: grpc_1.sendUnaryData<NewsletterList>): void;
         abstract GetNewsletterInfo(call: grpc_1.ServerUnaryCall<NewsletterInfoRequest, Newsletter>, callback: grpc_1.sendUnaryData<Newsletter>): void;
         abstract GetNewsletterMessagesByInvite(call: grpc_1.ServerUnaryCall<GetNewsletterMessagesByInviteRequest, Json>, callback: grpc_1.sendUnaryData<Json>): void;
@@ -7160,12 +7309,6 @@ export namespace messages {
         UpdateGroupParticipants: GrpcUnaryServiceInterface<UpdateParticipantsRequest, JsonList> = (message: UpdateParticipantsRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<JsonList>, options?: grpc_1.CallOptions | grpc_1.requestCallback<JsonList>, callback?: grpc_1.requestCallback<JsonList>): grpc_1.ClientUnaryCall => {
             return super.UpdateGroupParticipants(message, metadata, options, callback);
         };
-        SendMessage: GrpcUnaryServiceInterface<MessageRequest, MessageResponse> = (message: MessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
-            return super.SendMessage(message, metadata, options, callback);
-        };
-        SendReaction: GrpcUnaryServiceInterface<MessageReaction, MessageResponse> = (message: MessageReaction, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
-            return super.SendReaction(message, metadata, options, callback);
-        };
         GetProfilePicture: GrpcUnaryServiceInterface<ProfilePictureRequest, ProfilePictureResponse> = (message: ProfilePictureRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<ProfilePictureResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<ProfilePictureResponse>, callback?: grpc_1.requestCallback<ProfilePictureResponse>): grpc_1.ClientUnaryCall => {
             return super.GetProfilePicture(message, metadata, options, callback);
         };
@@ -7178,11 +7321,20 @@ export namespace messages {
         SubscribePresence: GrpcUnaryServiceInterface<SubscribePresenceRequest, Empty> = (message: SubscribePresenceRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<Empty>, options?: grpc_1.CallOptions | grpc_1.requestCallback<Empty>, callback?: grpc_1.requestCallback<Empty>): grpc_1.ClientUnaryCall => {
             return super.SubscribePresence(message, metadata, options, callback);
         };
+        CheckPhones: GrpcUnaryServiceInterface<CheckPhonesRequest, CheckPhonesResponse> = (message: CheckPhonesRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, callback?: grpc_1.requestCallback<CheckPhonesResponse>): grpc_1.ClientUnaryCall => {
+            return super.CheckPhones(message, metadata, options, callback);
+        };
+        SendMessage: GrpcUnaryServiceInterface<MessageRequest, MessageResponse> = (message: MessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
+            return super.SendMessage(message, metadata, options, callback);
+        };
+        SendReaction: GrpcUnaryServiceInterface<MessageReaction, MessageResponse> = (message: MessageReaction, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
+            return super.SendReaction(message, metadata, options, callback);
+        };
         MarkRead: GrpcUnaryServiceInterface<MarkReadRequest, Empty> = (message: MarkReadRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<Empty>, options?: grpc_1.CallOptions | grpc_1.requestCallback<Empty>, callback?: grpc_1.requestCallback<Empty>): grpc_1.ClientUnaryCall => {
             return super.MarkRead(message, metadata, options, callback);
         };
-        CheckPhones: GrpcUnaryServiceInterface<CheckPhonesRequest, CheckPhonesResponse> = (message: CheckPhonesRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, callback?: grpc_1.requestCallback<CheckPhonesResponse>): grpc_1.ClientUnaryCall => {
-            return super.CheckPhones(message, metadata, options, callback);
+        RevokeMessage: GrpcUnaryServiceInterface<RevokeMessageRequest, MessageResponse> = (message: RevokeMessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
+            return super.RevokeMessage(message, metadata, options, callback);
         };
         GetSubscribedNewsletters: GrpcUnaryServiceInterface<NewsletterListRequest, NewsletterList> = (message: NewsletterListRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<NewsletterList>, options?: grpc_1.CallOptions | grpc_1.requestCallback<NewsletterList>, callback?: grpc_1.requestCallback<NewsletterList>): grpc_1.ClientUnaryCall => {
             return super.GetSubscribedNewsletters(message, metadata, options, callback);

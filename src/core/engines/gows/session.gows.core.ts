@@ -538,6 +538,20 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     return this.messageResponse(jid, data);
   }
 
+  public async deleteMessage(chatId: string, messageId: string) {
+    const jid = toJID(this.ensureSuffix(chatId));
+    const key = parseMessageIdSerialized(messageId);
+    const message = new messages.RevokeMessageRequest({
+      session: this.session,
+      jid: jid,
+      sender: key.participant || '',
+      messageId: key.id,
+    });
+    const response = await promisify(this.client.RevokeMessage)(message);
+    const data = response.toObject();
+    return this.messageResponse(jid, data);
+  }
+
   protected checkStatusRequest(request: StatusRequest) {
     if (request.contacts && request.contacts?.length > 0) {
       const msg =
