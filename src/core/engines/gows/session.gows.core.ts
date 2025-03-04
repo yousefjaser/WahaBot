@@ -65,7 +65,12 @@ import {
 } from '@waha/structures/presence.dto';
 import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
 import { MeInfo, ProxyConfig } from '@waha/structures/sessions.dto';
-import { StatusRequest, TextStatus } from '@waha/structures/status.dto';
+import {
+  BROADCAST_ID,
+  DeleteStatusRequest,
+  StatusRequest,
+  TextStatus,
+} from '@waha/structures/status.dto';
 import { EnginePayload, WAMessageAckBody } from '@waha/structures/webhooks.dto';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
 import { onlyEvent } from '@waha/utils/reactive/ops/onlyEvent';
@@ -579,6 +584,20 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     const response = await promisify(this.client.SendMessage)(message);
     const data = response.toObject();
     return this.messageResponse(Jid.BROADCAST, data);
+  }
+
+  public async deleteStatus(request: DeleteStatusRequest) {
+    this.checkStatusRequest(request);
+    const key = parseMessageIdSerialized(request.id, true);
+    const message = new messages.RevokeMessageRequest({
+      session: this.session,
+      jid: BROADCAST_ID,
+      sender: '',
+      messageId: key.id,
+    });
+    const response = await promisify(this.client.RevokeMessage)(message);
+    const data = response.toObject();
+    return this.messageResponse(BROADCAST_ID, data);
   }
 
   protected messageResponse(jid, data) {
