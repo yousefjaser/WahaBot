@@ -4040,6 +4040,191 @@ export namespace messages {
             return RevokeMessageRequest.deserialize(bytes);
         }
     }
+    export class EditMessageRequest extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            session?: Session;
+            jid?: string;
+            messageId?: string;
+            text?: string;
+            linkPreview?: boolean;
+            linkPreviewHighQuality?: boolean;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("session" in data && data.session != undefined) {
+                    this.session = data.session;
+                }
+                if ("jid" in data && data.jid != undefined) {
+                    this.jid = data.jid;
+                }
+                if ("messageId" in data && data.messageId != undefined) {
+                    this.messageId = data.messageId;
+                }
+                if ("text" in data && data.text != undefined) {
+                    this.text = data.text;
+                }
+                if ("linkPreview" in data && data.linkPreview != undefined) {
+                    this.linkPreview = data.linkPreview;
+                }
+                if ("linkPreviewHighQuality" in data && data.linkPreviewHighQuality != undefined) {
+                    this.linkPreviewHighQuality = data.linkPreviewHighQuality;
+                }
+            }
+        }
+        get session() {
+            return pb_1.Message.getWrapperField(this, Session, 1) as Session;
+        }
+        set session(value: Session) {
+            pb_1.Message.setWrapperField(this, 1, value);
+        }
+        get has_session() {
+            return pb_1.Message.getField(this, 1) != null;
+        }
+        get jid() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set jid(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get messageId() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set messageId(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        get text() {
+            return pb_1.Message.getFieldWithDefault(this, 5, "") as string;
+        }
+        set text(value: string) {
+            pb_1.Message.setField(this, 5, value);
+        }
+        get linkPreview() {
+            return pb_1.Message.getFieldWithDefault(this, 6, false) as boolean;
+        }
+        set linkPreview(value: boolean) {
+            pb_1.Message.setField(this, 6, value);
+        }
+        get linkPreviewHighQuality() {
+            return pb_1.Message.getFieldWithDefault(this, 7, false) as boolean;
+        }
+        set linkPreviewHighQuality(value: boolean) {
+            pb_1.Message.setField(this, 7, value);
+        }
+        static fromObject(data: {
+            session?: ReturnType<typeof Session.prototype.toObject>;
+            jid?: string;
+            messageId?: string;
+            text?: string;
+            linkPreview?: boolean;
+            linkPreviewHighQuality?: boolean;
+        }): EditMessageRequest {
+            const message = new EditMessageRequest({});
+            if (data.session != null) {
+                message.session = Session.fromObject(data.session);
+            }
+            if (data.jid != null) {
+                message.jid = data.jid;
+            }
+            if (data.messageId != null) {
+                message.messageId = data.messageId;
+            }
+            if (data.text != null) {
+                message.text = data.text;
+            }
+            if (data.linkPreview != null) {
+                message.linkPreview = data.linkPreview;
+            }
+            if (data.linkPreviewHighQuality != null) {
+                message.linkPreviewHighQuality = data.linkPreviewHighQuality;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                session?: ReturnType<typeof Session.prototype.toObject>;
+                jid?: string;
+                messageId?: string;
+                text?: string;
+                linkPreview?: boolean;
+                linkPreviewHighQuality?: boolean;
+            } = {};
+            if (this.session != null) {
+                data.session = this.session.toObject();
+            }
+            if (this.jid != null) {
+                data.jid = this.jid;
+            }
+            if (this.messageId != null) {
+                data.messageId = this.messageId;
+            }
+            if (this.text != null) {
+                data.text = this.text;
+            }
+            if (this.linkPreview != null) {
+                data.linkPreview = this.linkPreview;
+            }
+            if (this.linkPreviewHighQuality != null) {
+                data.linkPreviewHighQuality = this.linkPreviewHighQuality;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.has_session)
+                writer.writeMessage(1, this.session, () => this.session.serialize(writer));
+            if (this.jid.length)
+                writer.writeString(2, this.jid);
+            if (this.messageId.length)
+                writer.writeString(4, this.messageId);
+            if (this.text.length)
+                writer.writeString(5, this.text);
+            if (this.linkPreview != false)
+                writer.writeBool(6, this.linkPreview);
+            if (this.linkPreviewHighQuality != false)
+                writer.writeBool(7, this.linkPreviewHighQuality);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): EditMessageRequest {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new EditMessageRequest();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        reader.readMessage(message.session, () => message.session = Session.deserialize(reader));
+                        break;
+                    case 2:
+                        message.jid = reader.readString();
+                        break;
+                    case 4:
+                        message.messageId = reader.readString();
+                        break;
+                    case 5:
+                        message.text = reader.readString();
+                        break;
+                    case 6:
+                        message.linkPreview = reader.readBool();
+                        break;
+                    case 7:
+                        message.linkPreviewHighQuality = reader.readBool();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): EditMessageRequest {
+            return EditMessageRequest.deserialize(bytes);
+        }
+    }
     export class NewsletterListRequest extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
@@ -7052,6 +7237,15 @@ export namespace messages {
                 responseSerialize: (message: Empty) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => Empty.deserialize(new Uint8Array(bytes))
             },
+            EditMessage: {
+                path: "/messages.MessageService/EditMessage",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: EditMessageRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => EditMessageRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
+            },
             RevokeMessage: {
                 path: "/messages.MessageService/RevokeMessage",
                 requestStream: false,
@@ -7220,6 +7414,7 @@ export namespace messages {
         abstract SendMessage(call: grpc_1.ServerUnaryCall<MessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract SendReaction(call: grpc_1.ServerUnaryCall<MessageReaction, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract MarkRead(call: grpc_1.ServerUnaryCall<MarkReadRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
+        abstract EditMessage(call: grpc_1.ServerUnaryCall<EditMessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract RevokeMessage(call: grpc_1.ServerUnaryCall<RevokeMessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract GetSubscribedNewsletters(call: grpc_1.ServerUnaryCall<NewsletterListRequest, NewsletterList>, callback: grpc_1.sendUnaryData<NewsletterList>): void;
         abstract GetNewsletterInfo(call: grpc_1.ServerUnaryCall<NewsletterInfoRequest, Newsletter>, callback: grpc_1.sendUnaryData<Newsletter>): void;
@@ -7332,6 +7527,9 @@ export namespace messages {
         };
         MarkRead: GrpcUnaryServiceInterface<MarkReadRequest, Empty> = (message: MarkReadRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<Empty>, options?: grpc_1.CallOptions | grpc_1.requestCallback<Empty>, callback?: grpc_1.requestCallback<Empty>): grpc_1.ClientUnaryCall => {
             return super.MarkRead(message, metadata, options, callback);
+        };
+        EditMessage: GrpcUnaryServiceInterface<EditMessageRequest, MessageResponse> = (message: EditMessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
+            return super.EditMessage(message, metadata, options, callback);
         };
         RevokeMessage: GrpcUnaryServiceInterface<RevokeMessageRequest, MessageResponse> = (message: RevokeMessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
             return super.RevokeMessage(message, metadata, options, callback);

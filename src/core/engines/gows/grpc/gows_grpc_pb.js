@@ -81,6 +81,17 @@ function deserialize_messages_DownloadMediaResponse(buffer_arg) {
   return gows_pb.DownloadMediaResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_messages_EditMessageRequest(arg) {
+  if (!(arg instanceof gows_pb.EditMessageRequest)) {
+    throw new Error('Expected argument of type messages.EditMessageRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_messages_EditMessageRequest(buffer_arg) {
+  return gows_pb.EditMessageRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_messages_Empty(arg) {
   if (!(arg instanceof gows_pb.Empty)) {
     throw new Error('Expected argument of type messages.Empty');
@@ -920,6 +931,17 @@ sendMessage: {
     requestDeserialize: deserialize_messages_MarkReadRequest,
     responseSerialize: serialize_messages_Empty,
     responseDeserialize: deserialize_messages_Empty,
+  },
+  editMessage: {
+    path: '/messages.MessageService/EditMessage',
+    requestStream: false,
+    responseStream: false,
+    requestType: gows_pb.EditMessageRequest,
+    responseType: gows_pb.MessageResponse,
+    requestSerialize: serialize_messages_EditMessageRequest,
+    requestDeserialize: deserialize_messages_EditMessageRequest,
+    responseSerialize: serialize_messages_MessageResponse,
+    responseDeserialize: deserialize_messages_MessageResponse,
   },
   revokeMessage: {
     path: '/messages.MessageService/RevokeMessage',

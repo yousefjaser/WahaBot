@@ -41,6 +41,7 @@ import {
 import {
   ChatRequest,
   CheckNumberStatusQuery,
+  EditMessageRequest,
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
@@ -539,6 +540,26 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       linkPreviewHighQuality: request.linkPreviewHighQuality,
     });
     const response = await promisify(this.client.SendMessage)(message);
+    const data = response.toObject();
+    return this.messageResponse(jid, data);
+  }
+
+  public async editMessage(
+    chatId: string,
+    messageId: string,
+    request: EditMessageRequest,
+  ) {
+    const jid = toJID(this.ensureSuffix(chatId));
+    const key = parseMessageIdSerialized(messageId, true);
+    const message = new messages.EditMessageRequest({
+      session: this.session,
+      jid: jid,
+      messageId: key.id,
+      text: request.text,
+      linkPreview: request.linkPreview ?? true,
+      linkPreviewHighQuality: request.linkPreviewHighQuality,
+    });
+    const response = await promisify(this.client.EditMessage)(message);
     const data = response.toObject();
     return this.messageResponse(jid, data);
   }
