@@ -2546,6 +2546,7 @@ export namespace messages {
             font?: OptionalUInt32;
             linkPreview?: boolean;
             linkPreviewHighQuality?: boolean;
+            replyTo?: string;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -2573,6 +2574,9 @@ export namespace messages {
                 }
                 if ("linkPreviewHighQuality" in data && data.linkPreviewHighQuality != undefined) {
                     this.linkPreviewHighQuality = data.linkPreviewHighQuality;
+                }
+                if ("replyTo" in data && data.replyTo != undefined) {
+                    this.replyTo = data.replyTo;
                 }
             }
         }
@@ -2636,6 +2640,12 @@ export namespace messages {
         set linkPreviewHighQuality(value: boolean) {
             pb_1.Message.setField(this, 8, value);
         }
+        get replyTo() {
+            return pb_1.Message.getFieldWithDefault(this, 9, "") as string;
+        }
+        set replyTo(value: string) {
+            pb_1.Message.setField(this, 9, value);
+        }
         static fromObject(data: {
             session?: ReturnType<typeof Session.prototype.toObject>;
             jid?: string;
@@ -2645,6 +2655,7 @@ export namespace messages {
             font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
             linkPreview?: boolean;
             linkPreviewHighQuality?: boolean;
+            replyTo?: string;
         }): MessageRequest {
             const message = new MessageRequest({});
             if (data.session != null) {
@@ -2671,6 +2682,9 @@ export namespace messages {
             if (data.linkPreviewHighQuality != null) {
                 message.linkPreviewHighQuality = data.linkPreviewHighQuality;
             }
+            if (data.replyTo != null) {
+                message.replyTo = data.replyTo;
+            }
             return message;
         }
         toObject() {
@@ -2683,6 +2697,7 @@ export namespace messages {
                 font?: ReturnType<typeof OptionalUInt32.prototype.toObject>;
                 linkPreview?: boolean;
                 linkPreviewHighQuality?: boolean;
+                replyTo?: string;
             } = {};
             if (this.session != null) {
                 data.session = this.session.toObject();
@@ -2708,6 +2723,9 @@ export namespace messages {
             if (this.linkPreviewHighQuality != null) {
                 data.linkPreviewHighQuality = this.linkPreviewHighQuality;
             }
+            if (this.replyTo != null) {
+                data.replyTo = this.replyTo;
+            }
             return data;
         }
         serialize(): Uint8Array;
@@ -2730,6 +2748,8 @@ export namespace messages {
                 writer.writeBool(7, this.linkPreview);
             if (this.linkPreviewHighQuality != false)
                 writer.writeBool(8, this.linkPreviewHighQuality);
+            if (this.replyTo.length)
+                writer.writeString(9, this.replyTo);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -2762,6 +2782,9 @@ export namespace messages {
                         break;
                     case 8:
                         message.linkPreviewHighQuality = reader.readBool();
+                        break;
+                    case 9:
+                        message.replyTo = reader.readString();
                         break;
                     default: reader.skipField();
                 }

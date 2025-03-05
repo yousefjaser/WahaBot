@@ -538,6 +538,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       session: this.session,
       linkPreview: request.linkPreview ?? true,
       linkPreviewHighQuality: request.linkPreviewHighQuality,
+      replyTo: getMessageIdFromSerialized(request.reply_to),
     });
     const response = await promisify(this.client.SendMessage)(message);
     const data = response.toObject();
@@ -1633,4 +1634,12 @@ function parseTimestampToSeconds(timestamp: string): number {
     return ms;
   }
   return Math.floor(ms / 1000);
+}
+
+export function getMessageIdFromSerialized(serialized: string): string | null {
+  if (!serialized) {
+    return null;
+  }
+  const key = parseMessageIdSerialized(serialized, true);
+  return key.id;
 }

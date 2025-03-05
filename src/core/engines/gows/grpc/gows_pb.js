@@ -6332,7 +6332,8 @@ proto.messages.MessageRequest.toObject = function(includeInstance, msg) {
     backgroundcolor: (f = msg.getBackgroundcolor()) && proto.messages.OptionalString.toObject(includeInstance, f),
     font: (f = msg.getFont()) && proto.messages.OptionalUInt32.toObject(includeInstance, f),
     linkpreview: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
-    linkpreviewhighquality: jspb.Message.getBooleanFieldWithDefault(msg, 8, false)
+    linkpreviewhighquality: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
+    replyto: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -6404,6 +6405,10 @@ proto.messages.MessageRequest.deserializeBinaryFromReader = function(msg, reader
     case 8:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setLinkpreviewhighquality(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setReplyto(value);
       break;
     default:
       reader.skipField();
@@ -6491,6 +6496,13 @@ proto.messages.MessageRequest.serializeBinaryToWriter = function(message, writer
   if (f) {
     writer.writeBool(
       8,
+      f
+    );
+  }
+  f = message.getReplyto();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -6714,6 +6726,24 @@ proto.messages.MessageRequest.prototype.getLinkpreviewhighquality = function() {
  */
 proto.messages.MessageRequest.prototype.setLinkpreviewhighquality = function(value) {
   return jspb.Message.setProto3BooleanField(this, 8, value);
+};
+
+
+/**
+ * optional string replyTo = 9;
+ * @return {string}
+ */
+proto.messages.MessageRequest.prototype.getReplyto = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.messages.MessageRequest} returns this
+ */
+proto.messages.MessageRequest.prototype.setReplyto = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
