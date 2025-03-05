@@ -6033,7 +6033,8 @@ proto.messages.Media.toObject = function(includeInstance, msg) {
     content: msg.getContent_asB64(),
     type: jspb.Message.getFieldWithDefault(msg, 2, 0),
     mimetype: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    audio: (f = msg.getAudio()) && proto.messages.AudioInfo.toObject(includeInstance, f)
+    audio: (f = msg.getAudio()) && proto.messages.AudioInfo.toObject(includeInstance, f),
+    filename: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -6086,6 +6087,10 @@ proto.messages.Media.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.messages.AudioInfo;
       reader.readMessage(value,proto.messages.AudioInfo.deserializeBinaryFromReader);
       msg.setAudio(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setFilename(value);
       break;
     default:
       reader.skipField();
@@ -6143,6 +6148,13 @@ proto.messages.Media.serializeBinaryToWriter = function(message, writer) {
       4,
       f,
       proto.messages.AudioInfo.serializeBinaryToWriter
+    );
+  }
+  f = message.getFilename();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
+      f
     );
   }
 };
@@ -6260,6 +6272,24 @@ proto.messages.Media.prototype.clearAudio = function() {
  */
 proto.messages.Media.prototype.hasAudio = function() {
   return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional string filename = 5;
+ * @return {string}
+ */
+proto.messages.Media.prototype.getFilename = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.messages.Media} returns this
+ */
+proto.messages.Media.prototype.setFilename = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
