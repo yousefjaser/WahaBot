@@ -178,6 +178,7 @@ export abstract class WhatsappSession {
             filter(Boolean),
             map((data) => {
               data._eventId = generatePrefixedId('evt');
+              data._timestampMs = Date.now();
               return data;
             }),
             retry(),
