@@ -1788,6 +1788,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     if (message.message.reactionMessage) return;
     // Ignore poll votes, we have dedicated handler for that
     if (message.message.pollUpdateMessage) return;
+    // Ignore calls, we have dedicated handler for that
+    if (message.message.call?.callKey) return;
     // Ignore revoke, we have a dedicated handler for that
     if (
       message.message.protocolMessage?.type ===
