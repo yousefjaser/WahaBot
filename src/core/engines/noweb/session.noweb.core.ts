@@ -2066,14 +2066,17 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   }
 
   protected async getMessageOptions(request: any): Promise<any> {
+    const jid = toJID(request.chatId);
+
     let quoted;
     if (request.reply_to) {
       const key = parseMessageIdSerialized(request.reply_to, true);
-      quoted = await this.store.loadMessage(toJID(request.chatId), key.id);
+      quoted = await this.store.loadMessage(jid, key.id);
     }
-
+    const chat = await this.store.getChat(jid);
     return {
       quoted: quoted,
+      ephemeralExpiration: chat?.ephemeralExpiration,
     };
   }
 

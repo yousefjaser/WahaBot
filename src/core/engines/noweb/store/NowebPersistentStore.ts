@@ -462,6 +462,10 @@ export class NowebPersistentStore implements INowebStore {
     return this.chatRepo.getAllWithMessages(pagination, broadcast);
   }
 
+  async getChat(jid: string): Promise<Chat | null> {
+    return await this.chatRepo.getById(jid);
+  }
+
   private shouldFetchGroup(): boolean {
     const timePassed = new Date().getTime() - this.lastTimeGroupFetch.getTime();
     return timePassed > this.GROUP_METADATA_CACHE_TIME;
