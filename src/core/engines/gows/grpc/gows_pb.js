@@ -7051,7 +7051,8 @@ proto.messages.MessageResponse.prototype.toObject = function(opt_includeInstance
 proto.messages.MessageResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    timestamp: jspb.Message.getFieldWithDefault(msg, 2, 0)
+    timestamp: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    message: (f = msg.getMessage()) && proto.messages.Json.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -7096,6 +7097,11 @@ proto.messages.MessageResponse.deserializeBinaryFromReader = function(msg, reade
       var value = /** @type {number} */ (reader.readInt64());
       msg.setTimestamp(value);
       break;
+    case 3:
+      var value = new proto.messages.Json;
+      reader.readMessage(value,proto.messages.Json.deserializeBinaryFromReader);
+      msg.setMessage(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -7139,6 +7145,14 @@ proto.messages.MessageResponse.serializeBinaryToWriter = function(message, write
       f
     );
   }
+  f = message.getMessage();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.messages.Json.serializeBinaryToWriter
+    );
+  }
 };
 
 
@@ -7175,6 +7189,43 @@ proto.messages.MessageResponse.prototype.getTimestamp = function() {
  */
 proto.messages.MessageResponse.prototype.setTimestamp = function(value) {
   return jspb.Message.setProto3IntField(this, 2, value);
+};
+
+
+/**
+ * optional Json message = 3;
+ * @return {?proto.messages.Json}
+ */
+proto.messages.MessageResponse.prototype.getMessage = function() {
+  return /** @type{?proto.messages.Json} */ (
+    jspb.Message.getWrapperField(this, proto.messages.Json, 3));
+};
+
+
+/**
+ * @param {?proto.messages.Json|undefined} value
+ * @return {!proto.messages.MessageResponse} returns this
+*/
+proto.messages.MessageResponse.prototype.setMessage = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.messages.MessageResponse} returns this
+ */
+proto.messages.MessageResponse.prototype.clearMessage = function() {
+  return this.setMessage(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.messages.MessageResponse.prototype.hasMessage = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

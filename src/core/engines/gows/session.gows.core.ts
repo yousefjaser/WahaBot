@@ -623,6 +623,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   }
 
   protected messageResponse(jid, data) {
+    const message = parseJson(data.message);
     const id = buildMessageId({
       ID: data.id,
       IsFromMe: true,
@@ -632,7 +633,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     });
     return {
       id: id,
-      _data: data,
+      _data: message,
     };
   }
 

@@ -2965,6 +2965,7 @@ export namespace messages {
         constructor(data?: any[] | {
             id?: string;
             timestamp?: number;
+            message?: Json;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -2974,6 +2975,9 @@ export namespace messages {
                 }
                 if ("timestamp" in data && data.timestamp != undefined) {
                     this.timestamp = data.timestamp;
+                }
+                if ("message" in data && data.message != undefined) {
+                    this.message = data.message;
                 }
             }
         }
@@ -2989,9 +2993,19 @@ export namespace messages {
         set timestamp(value: number) {
             pb_1.Message.setField(this, 2, value);
         }
+        get message() {
+            return pb_1.Message.getWrapperField(this, Json, 3) as Json;
+        }
+        set message(value: Json) {
+            pb_1.Message.setWrapperField(this, 3, value);
+        }
+        get has_message() {
+            return pb_1.Message.getField(this, 3) != null;
+        }
         static fromObject(data: {
             id?: string;
             timestamp?: number;
+            message?: ReturnType<typeof Json.prototype.toObject>;
         }): MessageResponse {
             const message = new MessageResponse({});
             if (data.id != null) {
@@ -3000,18 +3014,25 @@ export namespace messages {
             if (data.timestamp != null) {
                 message.timestamp = data.timestamp;
             }
+            if (data.message != null) {
+                message.message = Json.fromObject(data.message);
+            }
             return message;
         }
         toObject() {
             const data: {
                 id?: string;
                 timestamp?: number;
+                message?: ReturnType<typeof Json.prototype.toObject>;
             } = {};
             if (this.id != null) {
                 data.id = this.id;
             }
             if (this.timestamp != null) {
                 data.timestamp = this.timestamp;
+            }
+            if (this.message != null) {
+                data.message = this.message.toObject();
             }
             return data;
         }
@@ -3023,6 +3044,8 @@ export namespace messages {
                 writer.writeString(1, this.id);
             if (this.timestamp != 0)
                 writer.writeInt64(2, this.timestamp);
+            if (this.has_message)
+                writer.writeMessage(3, this.message, () => this.message.serialize(writer));
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -3037,6 +3060,9 @@ export namespace messages {
                         break;
                     case 2:
                         message.timestamp = reader.readInt64();
+                        break;
+                    case 3:
+                        reader.readMessage(message.message, () => message.message = Json.deserialize(reader));
                         break;
                     default: reader.skipField();
                 }
