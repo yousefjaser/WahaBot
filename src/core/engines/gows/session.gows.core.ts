@@ -8,19 +8,33 @@ import * as grpc from '@grpc/grpc-js';
 import { connectivityState } from '@grpc/grpc-js';
 import { UnprocessableEntityException } from '@nestjs/common';
 import {
+  extractDeviceId,
   getChannelInviteLink,
   WhatsappSession,
 } from '@waha/core/abc/session.abc';
 import { Jid } from '@waha/core/engines/const';
 import { EventsFromObservable } from '@waha/core/engines/gows/EventsFromObservable';
 import { GowsEventStreamObservable } from '@waha/core/engines/gows/GowsEventStreamObservable';
+import {
+  ToGroupV2JoinEvent,
+  ToGroupV2LeaveEvent,
+  ToGroupV2ParticipantsEvents,
+  ToGroupV2UpdateEvent,
+} from '@waha/core/engines/gows/groups.gows';
 import { messages } from '@waha/core/engines/gows/grpc/gows';
+import {
+  optional,
+  parseJson,
+  parseJsonList,
+  statusToAck,
+} from '@waha/core/engines/gows/helpers';
 import { GowsAuthFactoryCore } from '@waha/core/engines/gows/store/GowsAuthFactoryCore';
 import {
   parseMessageIdSerialized,
   toCusFormat,
   toJID,
 } from '@waha/core/engines/noweb/session.noweb.core';
+import { extractMediaContent } from '@waha/core/engines/noweb/utils';
 import {
   AvailableInPlusVersion,
   NotImplementedByEngineError,
@@ -39,6 +53,13 @@ import {
   PreviewChannelMessages,
 } from '@waha/structures/channels.dto';
 import {
+  ChatSortField,
+  ChatSummary,
+  GetChatMessageQuery,
+  GetChatMessagesFilter,
+  GetChatMessagesQuery,
+} from '@waha/structures/chats.dto';
+import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
@@ -53,6 +74,7 @@ import {
   SendSeenRequest,
   WANumberExistResult,
 } from '@waha/structures/chatting.dto';
+import { ContactQuery } from '@waha/structures/contacts.dto';
 import {
   ACK_UNKNOWN,
   WAHAEvents,
@@ -60,11 +82,24 @@ import {
   WAHASessionStatus,
   WAMessageAck,
 } from '@waha/structures/enums.dto';
+import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
+import {
+  CreateGroupRequest,
+  GroupSortField,
+  Participant,
+  ParticipantsRequest,
+  SettingsSecurityChangeInfo,
+} from '@waha/structures/groups.dto';
+import { PaginationParams, SortOrder } from '@waha/structures/pagination.dto';
 import {
   WAHAChatPresences,
   WAHAPresenceData,
 } from '@waha/structures/presence.dto';
-import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
+import {
+  MessageSource,
+  WAMessage,
+  WAMessageReaction,
+} from '@waha/structures/responses.dto';
 import { MeInfo, ProxyConfig } from '@waha/structures/sessions.dto';
 import {
   BROADCAST_ID,
@@ -73,6 +108,7 @@ import {
   TextStatus,
 } from '@waha/structures/status.dto';
 import { EnginePayload, WAMessageAckBody } from '@waha/structures/webhooks.dto';
+import { PaginatorInMemory } from '@waha/utils/Paginator';
 import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
 import { onlyEvent } from '@waha/utils/reactive/ops/onlyEvent';
 import * as NodeCache from 'node-cache';
@@ -92,37 +128,6 @@ import { promisify } from 'util';
 
 import * as gows from './types';
 import MessageServiceClient = messages.MessageServiceClient;
-import {
-  ToGroupV2JoinEvent,
-  ToGroupV2LeaveEvent,
-  ToGroupV2ParticipantsEvents,
-  ToGroupV2UpdateEvent,
-} from '@waha/core/engines/gows/groups.gows';
-import {
-  optional,
-  parseJson,
-  parseJsonList,
-  statusToAck,
-} from '@waha/core/engines/gows/helpers';
-import { extractMediaContent } from '@waha/core/engines/noweb/utils';
-import {
-  ChatSortField,
-  ChatSummary,
-  GetChatMessageQuery,
-  GetChatMessagesFilter,
-  GetChatMessagesQuery,
-} from '@waha/structures/chats.dto';
-import { ContactQuery } from '@waha/structures/contacts.dto';
-import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
-import {
-  CreateGroupRequest,
-  GroupSortField,
-  Participant,
-  ParticipantsRequest,
-  SettingsSecurityChangeInfo,
-} from '@waha/structures/groups.dto';
-import { PaginationParams, SortOrder } from '@waha/structures/pagination.dto';
-import { PaginatorInMemory } from '@waha/utils/Paginator';
 
 enum WhatsMeowEvent {
   CONNECTED = 'gows.ConnectedEventData',
@@ -256,6 +261,8 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
         id: toCusFormat(jidNormalizedUser(data.ID)),
         pushName: data.PushName,
       };
+      // @ts-ignore
+      this.me.jid = data.ID;
     });
 
     events.on(WhatsMeowEvent.DISCONNECTED, () => {
@@ -1378,7 +1385,6 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     const id = buildMessageId(message);
     const body = this.extractBody(message.Message);
     const replyTo = null; // TODO: this.extractReplyTo(message.message);
-
     let ack;
     if (message.Status) {
       ack = statusToAck(message.Status);
@@ -1386,12 +1392,14 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       ack = message.Info.IsFromMe ? WAMessageAck.SERVER : WAMessageAck.DEVICE;
     }
     const mediaContent = extractMediaContent(message.Message);
+    const source = this.getSourceDeviceByMsg(message);
 
     return {
       id: id,
       timestamp: parseTimestampToSeconds(message.Info.Timestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.Info.IsFromMe,
+      source: source,
       body: body,
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
@@ -1406,6 +1414,17 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       replyTo: replyTo,
       _data: message,
     };
+  }
+
+  private getSourceDeviceByMsg(message): MessageSource {
+    if (!message.Info.IsFromMe) {
+      return MessageSource.APP;
+    }
+    // @ts-ignore
+    const myJid = this.me.jid;
+    const myDeviceId = extractDeviceId(myJid);
+    const sentDeviceId = extractDeviceId(message.Info.Sender);
+    return sentDeviceId === myDeviceId ? MessageSource.API : MessageSource.APP;
   }
 
   private extractBody(message) {
@@ -1514,11 +1533,13 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     const fromToParticipant = getFromToParticipant(message);
     const reactionMessage = message.Message.reactionMessage;
     const messageId = this.buildMessageIdFromKey(reactionMessage.key);
+    const source = this.getSourceDeviceByMsg(message);
     const reaction: WAMessageReaction = {
       id: id,
       timestamp: parseTimestampToSeconds(message.Info.Timestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.Info.IsFromMe,
+      source: source,
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
       reaction: {

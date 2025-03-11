@@ -5,6 +5,7 @@ import makeWASocket, {
   DisconnectReason,
   downloadMediaMessage,
   extractMessageContent,
+  generateMessageIDV2,
   getAggregateVotesInPollMessage,
   getContentType,
   getKeyAuthor,
@@ -151,6 +152,7 @@ import {
   WAHAPresenceData,
 } from '../../../structures/presence.dto';
 import {
+  MessageSource,
   WAMessage,
   WAMessageReaction,
 } from '../../../structures/responses.dto';
@@ -1765,11 +1767,13 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const fromToParticipant = getFromToParticipant(message);
     const reactionMessage = message.message.reactionMessage;
     const messageId = buildMessageId(reactionMessage.key);
+    const source = this.getMessageSource(message.key.id);
     const reaction: WAMessageReaction = {
       id: id,
       timestamp: ensureNumber(message.messageTimestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.key.fromMe,
+      source: source,
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
       reaction: {
@@ -1828,11 +1832,13 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const replyTo = this.extractReplyTo(message.message);
     const ack = message.ack || message.status - 1;
     const mediaContent = extractMediaContent(message.message);
+    const source = this.getMessageSource(message.key.id);
     return Promise.resolve({
       id: id,
       timestamp: ensureNumber(message.messageTimestamp),
       from: toCusFormat(fromToParticipant.from),
       fromMe: message.key.fromMe,
+      source: source,
       body: body || null,
       to: toCusFormat(fromToParticipant.to),
       participant: toCusFormat(fromToParticipant.participant),
@@ -2074,9 +2080,11 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       quoted = await this.store.loadMessage(jid, key.id);
     }
     const chat = await this.store.getChat(jid);
+    const messageId = this.generateMessageID();
     return {
       quoted: quoted,
       ephemeralExpiration: chat?.ephemeralExpiration,
+      messageId: messageId,
     };
   }
 
@@ -2094,6 +2102,12 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         linkPreview = undefined;
     }
     return linkPreview;
+  }
+
+  protected generateMessageID() {
+    const id = generateMessageIDV2(this.sock.user?.id);
+    this.saveSentMessageId(id);
+    return id;
   }
 }
 
