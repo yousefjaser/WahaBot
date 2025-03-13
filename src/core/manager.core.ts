@@ -364,9 +364,9 @@ export class SessionManagerCore extends SessionManager implements OnModuleInit {
       try {
         engineInfo = await promiseTimeout(1000, session.getEngineInfo());
       } catch (error) {
-        this.log.warn(
+        this.log.debug(
           { session: session.name, error: `${error}` },
-          'Error while getting engine info',
+          'Can not get engine info',
         );
       }
     }
