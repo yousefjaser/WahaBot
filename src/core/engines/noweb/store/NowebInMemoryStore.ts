@@ -95,7 +95,7 @@ export class NowebInMemoryStore implements INowebStore {
 
   async getGroups(pagination: PaginationParams): Promise<GroupMetadata[]> {
     const response = await this.socket?.groupFetchAllParticipating();
-    const groups = Object.values(response);
+    const groups: any[] = Object.values(response);
     const paginator = new PaginatorInMemory(pagination);
     return paginator.apply(groups);
   }
