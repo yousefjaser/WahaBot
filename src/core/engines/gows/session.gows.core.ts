@@ -1363,6 +1363,8 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     if (message.Message.pollUpdateMessage) return;
     // Ignore protocol messages
     if (message.Message.protocolMessage) return;
+    // Ignore key distribution messages
+    if (message.Message.senderKeyDistributionMessage) return;
 
     if (downloadMedia) {
       try {
