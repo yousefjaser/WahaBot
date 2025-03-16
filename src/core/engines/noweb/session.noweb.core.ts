@@ -9,7 +9,6 @@ import makeWASocket, {
   getAggregateVotesInPollMessage,
   getContentType,
   getKeyAuthor,
-  getUrlFromDirectPath,
   isJidGroup,
   isJidNewsletter,
   isJidStatusBroadcast,
@@ -43,14 +42,29 @@ import { isLidUser } from '@adiwajshing/baileys/lib/WABinary/jid-utils';
 import { Logger as BaileysLogger } from '@adiwajshing/baileys/node_modules/pino';
 import { UnprocessableEntityException } from '@nestjs/common';
 import {
+  ensureSuffix,
+  getChannelInviteLink,
+  getPublicUrlFromDirectPath,
+  isNewsletter,
+  WhatsappSession,
+} from '@waha/core/abc/session.abc';
+import {
   ToGroupV2JoinEvent,
   ToGroupV2LeaveEvent,
   ToGroupV2Participants,
   ToGroupV2UpdateEvent,
 } from '@waha/core/engines/noweb/groups.noweb';
 import { sendButtonMessage } from '@waha/core/engines/noweb/noweb.buttons';
+import { NowebAuthFactoryCore } from '@waha/core/engines/noweb/NowebAuthFactoryCore';
 import { NowebInMemoryStore } from '@waha/core/engines/noweb/store/NowebInMemoryStore';
+import {
+  AvailableInPlusVersion,
+  NotImplementedByEngineError,
+} from '@waha/core/exceptions';
+import { toVcard } from '@waha/core/helpers';
+import { createAgentProxy } from '@waha/core/helpers.proxy';
 import { IMediaEngineProcessor } from '@waha/core/media/IMediaEngineProcessor';
+import { QR } from '@waha/core/QR';
 import { flipObject, splitAt } from '@waha/helpers';
 import { PairingCodeResponse } from '@waha/structures/auth.dto';
 import { CallData } from '@waha/structures/calls.dto';
@@ -73,8 +87,42 @@ import {
   PinDuration,
 } from '@waha/structures/chats.dto';
 import { SendButtonsRequest } from '@waha/structures/chatting.buttons.dto';
+import {
+  ChatRequest,
+  CheckNumberStatusQuery,
+  EditMessageRequest,
+  MessageContactVcardRequest,
+  MessageDestination,
+  MessageFileRequest,
+  MessageForwardRequest,
+  MessageImageRequest,
+  MessageLinkPreviewRequest,
+  MessageLocationRequest,
+  MessagePollRequest,
+  MessageReactionRequest,
+  MessageReplyRequest,
+  MessageStarRequest,
+  MessageTextRequest,
+  MessageVoiceRequest,
+  SendSeenRequest,
+  WANumberExistResult,
+} from '@waha/structures/chatting.dto';
 import { ContactQuery, ContactRequest } from '@waha/structures/contacts.dto';
+import {
+  ACK_UNKNOWN,
+  SECOND,
+  WAHAEngine,
+  WAHAEvents,
+  WAHAPresenceStatus,
+  WAHASessionStatus,
+  WAMessageAck,
+} from '@waha/structures/enums.dto';
 import { BinaryFile, RemoteFile } from '@waha/structures/files.dto';
+import {
+  CreateGroupRequest,
+  ParticipantsRequest,
+  SettingsSecurityChangeInfo,
+} from '@waha/structures/groups.dto';
 import {
   Label,
   LabelChatAssociation,
@@ -83,6 +131,17 @@ import {
 } from '@waha/structures/labels.dto';
 import { ReplyToMessage } from '@waha/structures/message.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
+import {
+  WAHAChatPresences,
+  WAHAPresenceData,
+} from '@waha/structures/presence.dto';
+import { WAMessage, WAMessageReaction } from '@waha/structures/responses.dto';
+import { MeInfo } from '@waha/structures/sessions.dto';
+import {
+  BROADCAST_ID,
+  DeleteStatusRequest,
+  TextStatus,
+} from '@waha/structures/status.dto';
 import {
   EnginePayload,
   PollVote,
@@ -109,74 +168,9 @@ import {
   Observable,
   partition,
   share,
-  Subject,
 } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import {
-  ChatRequest,
-  CheckNumberStatusQuery,
-  EditMessageRequest,
-  MessageContactVcardRequest,
-  MessageDestination,
-  MessageFileRequest,
-  MessageForwardRequest,
-  MessageImageRequest,
-  MessageLinkPreviewRequest,
-  MessageLocationRequest,
-  MessagePollRequest,
-  MessageReactionRequest,
-  MessageReplyRequest,
-  MessageStarRequest,
-  MessageTextRequest,
-  MessageVoiceRequest,
-  SendSeenRequest,
-  WANumberExistResult,
-} from '../../../structures/chatting.dto';
-import {
-  ACK_UNKNOWN,
-  SECOND,
-  WAHAEngine,
-  WAHAEvents,
-  WAHAPresenceStatus,
-  WAHASessionStatus,
-  WAMessageAck,
-} from '../../../structures/enums.dto';
-import {
-  CreateGroupRequest,
-  ParticipantsRequest,
-  SettingsSecurityChangeInfo,
-} from '../../../structures/groups.dto';
-import {
-  WAHAChatPresences,
-  WAHAPresenceData,
-} from '../../../structures/presence.dto';
-import {
-  MessageSource,
-  WAMessage,
-  WAMessageReaction,
-} from '../../../structures/responses.dto';
-import { MeInfo } from '../../../structures/sessions.dto';
-import {
-  BROADCAST_ID,
-  DeleteStatusRequest,
-  TextStatus,
-} from '../../../structures/status.dto';
-import {
-  ensureSuffix,
-  getChannelInviteLink,
-  getPublicUrlFromDirectPath,
-  isNewsletter,
-  WhatsappSession,
-} from '../../abc/session.abc';
-import {
-  AvailableInPlusVersion,
-  NotImplementedByEngineError,
-} from '../../exceptions';
-import { toVcard } from '../../helpers';
-import { createAgentProxy } from '../../helpers.proxy';
-import { QR } from '../../QR';
-import { NowebAuthFactoryCore } from './NowebAuthFactoryCore';
 import { INowebStore } from './store/INowebStore';
 import { NowebPersistentStore } from './store/NowebPersistentStore';
 import { NowebStorageFactoryCore } from './store/NowebStorageFactoryCore';
@@ -704,7 +698,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       mentions: request.mentions?.map(toJID),
       linkPreview: this.getLinkPreview(request),
     };
-    const options = await this.getMessageOptions(request);
+    const options: any = await this.getMessageOptions(request);
     options.linkPreviewHighQuality = request.linkPreviewHighQuality;
     return this.sock.sendMessage(chatId, message, options);
   }
@@ -712,7 +706,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   public deleteMessage(chatId: string, messageId: string) {
     const jid = toJID(this.ensureSuffix(chatId));
     const key = parseMessageIdSerialized(messageId);
-    return this.sock.sendMessage(jid, { delete: key });
+    const options = {
+      messageId: this.generateMessageID(),
+    };
+    return this.sock.sendMessage(jid, { delete: key }, options);
   }
 
   public editMessage(
@@ -729,17 +726,18 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       linkPreview: this.getLinkPreview(request),
       linkPreviewHighQuality: request.linkPreviewHighQuality,
     };
-    return this.sock.sendMessage(jid, message);
+    const options = {
+      messageId: this.generateMessageID(),
+    };
+    return this.sock.sendMessage(jid, message, options);
   }
 
   async sendContactVCard(request: MessageContactVcardRequest) {
     const chatId = toJID(this.ensureSuffix(request.chatId));
     const contacts = request.contacts.map((el) => ({ vcard: toVcard(el) }));
-    await this.sock.sendMessage(chatId, {
-      contacts: {
-        contacts: contacts,
-      },
-    });
+    const options = await this.getMessageOptions(request);
+    const msg = { contacts: { contacts: contacts } };
+    return await this.sock.sendMessage(chatId, msg, options);
   }
 
   async sendPoll(request: MessagePollRequest) {
@@ -803,13 +801,15 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     );
   }
 
-  sendLocation(request: MessageLocationRequest) {
-    return this.sock.sendMessage(request.chatId, {
+  async sendLocation(request: MessageLocationRequest) {
+    const msg = {
       location: {
         degreesLatitude: request.latitude,
         degreesLongitude: request.longitude,
       },
-    });
+    };
+    const options = await this.getMessageOptions(request);
+    return await this.sock.sendMessage(request.chatId, msg, options);
   }
 
   async forwardMessage(request: MessageForwardRequest): Promise<WAMessage> {
@@ -825,14 +825,17 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       forward: forwardMessage,
       force: true,
     };
-    const result = await this.sock.sendMessage(chatId, message, {});
+    const options = await this.getMessageOptions(request);
+    const result = await this.sock.sendMessage(chatId, message, options);
     return this.toWAMessage(result);
   }
 
-  sendLinkPreview(request: MessageLinkPreviewRequest) {
+  async sendLinkPreview(request: MessageLinkPreviewRequest) {
     const text = `${request.title}\n${request.url}`;
     const chatId = toJID(this.ensureSuffix(request.chatId));
-    return this.sock.sendMessage(chatId, { text: text });
+    const msg = { text: text };
+    const options = await this.getMessageOptions(request);
+    return this.sock.sendMessage(chatId, msg, options);
   }
 
   async sendSeen(request: SendSeenRequest) {
@@ -1333,13 +1336,14 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       linkPreview: this.getLinkPreview(status),
     };
     const jids = await this.prepareJidsForStatus(status.contacts);
+    const messageId = this.generateMessageID();
     const options: MiscMessageGenerationOptions = {
       backgroundColor: status.backgroundColor,
       font: status.font,
       statusJidList: jids,
       linkPreviewHighQuality: status.linkPreviewHighQuality,
+      messageId: messageId,
     };
-
     return await this.sock.sendMessage(BROADCAST_ID, message, options);
   }
 
@@ -1366,8 +1370,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     key.fromMe = true;
     key.remoteJid = BROADCAST_ID;
     const jids = await this.prepareJidsForStatus(request.contacts);
+    const newMessageId = this.generateMessageID();
     const options = {
       statusJidList: jids,
+      messageId: newMessageId,
     };
     return await this.sock.sendMessage(BROADCAST_ID, { delete: key }, options);
   }
@@ -2071,7 +2077,10 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return this.mediaManager.processMedia(processor, message, this.name);
   }
 
-  protected async getMessageOptions(request: any): Promise<any> {
+  protected async getMessageOptions(request: {
+    chatId: string;
+    reply_to?: string;
+  }) {
     const jid = toJID(request.chatId);
 
     let quoted;
