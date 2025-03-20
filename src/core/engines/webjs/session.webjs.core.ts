@@ -41,6 +41,7 @@ import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
+  MessageButtonReply,
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
@@ -537,6 +538,10 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   }
 
   sendVoice(request: MessageVoiceRequest) {
+    throw new AvailableInPlusVersion();
+  }
+
+  sendButtonsReply(request: MessageButtonReply) {
     throw new AvailableInPlusVersion();
   }
 
@@ -1443,7 +1448,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     let mentions = request.mentions;
     mentions = mentions ? mentions.map(this.ensureSuffix) : undefined;
 
-    const quotedMessageId = request.reply_to;
+    const quotedMessageId = request.reply_to || request.replyTo;
 
     return {
       mentions: mentions,

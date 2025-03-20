@@ -46,6 +46,7 @@ import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
+  MessageButtonReply,
   MessageContactVcardRequest,
   MessageFileRequest,
   MessageForwardRequest,
@@ -428,6 +429,10 @@ export abstract class WhatsappSession {
   }
 
   sendButtons(request: SendButtonsRequest) {
+    throw new NotImplementedByEngineError();
+  }
+
+  sendButtonsReply(request: MessageButtonReply) {
     throw new NotImplementedByEngineError();
   }
 

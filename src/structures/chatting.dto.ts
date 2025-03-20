@@ -64,6 +64,7 @@ export class GetPresenceQuery extends ChatQuery {}
  */
 export class ChatRequest extends SessionBaseRequest {
   @ChatIdProperty()
+  @IsString()
   chatId: string;
 }
 
@@ -332,4 +333,19 @@ export class MessageDestination {
   to: string;
   from: string;
   fromMe: boolean;
+}
+
+export class MessageButtonReply extends ChatRequest {
+  @ReplyToProperty()
+  @IsString()
+  @IsNotEmpty()
+  replyTo?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  selectedDisplayText: string;
+
+  @IsString()
+  @IsNotEmpty()
+  selectedButtonID: string;
 }

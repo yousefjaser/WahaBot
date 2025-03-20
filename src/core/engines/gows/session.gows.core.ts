@@ -63,6 +63,7 @@ import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
+  MessageButtonReply,
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,

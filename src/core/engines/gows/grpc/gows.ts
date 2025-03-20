@@ -3236,6 +3236,168 @@ export namespace messages {
             return ProfilePictureResponse.deserialize(bytes);
         }
     }
+    export class ButtonReplyRequest extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            session?: Session;
+            jid?: string;
+            selectedDisplayText?: string;
+            selectedButtonID?: string;
+            replyTo?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("session" in data && data.session != undefined) {
+                    this.session = data.session;
+                }
+                if ("jid" in data && data.jid != undefined) {
+                    this.jid = data.jid;
+                }
+                if ("selectedDisplayText" in data && data.selectedDisplayText != undefined) {
+                    this.selectedDisplayText = data.selectedDisplayText;
+                }
+                if ("selectedButtonID" in data && data.selectedButtonID != undefined) {
+                    this.selectedButtonID = data.selectedButtonID;
+                }
+                if ("replyTo" in data && data.replyTo != undefined) {
+                    this.replyTo = data.replyTo;
+                }
+            }
+        }
+        get session() {
+            return pb_1.Message.getWrapperField(this, Session, 1) as Session;
+        }
+        set session(value: Session) {
+            pb_1.Message.setWrapperField(this, 1, value);
+        }
+        get has_session() {
+            return pb_1.Message.getField(this, 1) != null;
+        }
+        get jid() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set jid(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get selectedDisplayText() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set selectedDisplayText(value: string) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        get selectedButtonID() {
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+        }
+        set selectedButtonID(value: string) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        get replyTo() {
+            return pb_1.Message.getFieldWithDefault(this, 5, "") as string;
+        }
+        set replyTo(value: string) {
+            pb_1.Message.setField(this, 5, value);
+        }
+        static fromObject(data: {
+            session?: ReturnType<typeof Session.prototype.toObject>;
+            jid?: string;
+            selectedDisplayText?: string;
+            selectedButtonID?: string;
+            replyTo?: string;
+        }): ButtonReplyRequest {
+            const message = new ButtonReplyRequest({});
+            if (data.session != null) {
+                message.session = Session.fromObject(data.session);
+            }
+            if (data.jid != null) {
+                message.jid = data.jid;
+            }
+            if (data.selectedDisplayText != null) {
+                message.selectedDisplayText = data.selectedDisplayText;
+            }
+            if (data.selectedButtonID != null) {
+                message.selectedButtonID = data.selectedButtonID;
+            }
+            if (data.replyTo != null) {
+                message.replyTo = data.replyTo;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                session?: ReturnType<typeof Session.prototype.toObject>;
+                jid?: string;
+                selectedDisplayText?: string;
+                selectedButtonID?: string;
+                replyTo?: string;
+            } = {};
+            if (this.session != null) {
+                data.session = this.session.toObject();
+            }
+            if (this.jid != null) {
+                data.jid = this.jid;
+            }
+            if (this.selectedDisplayText != null) {
+                data.selectedDisplayText = this.selectedDisplayText;
+            }
+            if (this.selectedButtonID != null) {
+                data.selectedButtonID = this.selectedButtonID;
+            }
+            if (this.replyTo != null) {
+                data.replyTo = this.replyTo;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.has_session)
+                writer.writeMessage(1, this.session, () => this.session.serialize(writer));
+            if (this.jid.length)
+                writer.writeString(2, this.jid);
+            if (this.selectedDisplayText.length)
+                writer.writeString(3, this.selectedDisplayText);
+            if (this.selectedButtonID.length)
+                writer.writeString(4, this.selectedButtonID);
+            if (this.replyTo.length)
+                writer.writeString(5, this.replyTo);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ButtonReplyRequest {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ButtonReplyRequest();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        reader.readMessage(message.session, () => message.session = Session.deserialize(reader));
+                        break;
+                    case 2:
+                        message.jid = reader.readString();
+                        break;
+                    case 3:
+                        message.selectedDisplayText = reader.readString();
+                        break;
+                    case 4:
+                        message.selectedButtonID = reader.readString();
+                        break;
+                    case 5:
+                        message.replyTo = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): ButtonReplyRequest {
+            return ButtonReplyRequest.deserialize(bytes);
+        }
+    }
     export class PresenceRequest extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
@@ -7327,6 +7489,15 @@ export namespace messages {
                 responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
             },
+            SendButtonReply: {
+                path: "/messages.MessageService/SendButtonReply",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: ButtonReplyRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => ButtonReplyRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: MessageResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => MessageResponse.deserialize(new Uint8Array(bytes))
+            },
             GetSubscribedNewsletters: {
                 path: "/messages.MessageService/GetSubscribedNewsletters",
                 requestStream: false,
@@ -7488,6 +7659,7 @@ export namespace messages {
         abstract MarkRead(call: grpc_1.ServerUnaryCall<MarkReadRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract EditMessage(call: grpc_1.ServerUnaryCall<EditMessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract RevokeMessage(call: grpc_1.ServerUnaryCall<RevokeMessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
+        abstract SendButtonReply(call: grpc_1.ServerUnaryCall<ButtonReplyRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract GetSubscribedNewsletters(call: grpc_1.ServerUnaryCall<NewsletterListRequest, NewsletterList>, callback: grpc_1.sendUnaryData<NewsletterList>): void;
         abstract GetNewsletterInfo(call: grpc_1.ServerUnaryCall<NewsletterInfoRequest, Newsletter>, callback: grpc_1.sendUnaryData<Newsletter>): void;
         abstract GetNewsletterMessagesByInvite(call: grpc_1.ServerUnaryCall<GetNewsletterMessagesByInviteRequest, Json>, callback: grpc_1.sendUnaryData<Json>): void;
@@ -7605,6 +7777,9 @@ export namespace messages {
         };
         RevokeMessage: GrpcUnaryServiceInterface<RevokeMessageRequest, MessageResponse> = (message: RevokeMessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
             return super.RevokeMessage(message, metadata, options, callback);
+        };
+        SendButtonReply: GrpcUnaryServiceInterface<ButtonReplyRequest, MessageResponse> = (message: ButtonReplyRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
+            return super.SendButtonReply(message, metadata, options, callback);
         };
         GetSubscribedNewsletters: GrpcUnaryServiceInterface<NewsletterListRequest, NewsletterList> = (message: NewsletterListRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<NewsletterList>, options?: grpc_1.CallOptions | grpc_1.requestCallback<NewsletterList>, callback?: grpc_1.requestCallback<NewsletterList>): grpc_1.ClientUnaryCall => {
             return super.GetSubscribedNewsletters(message, metadata, options, callback);
