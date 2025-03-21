@@ -1191,7 +1191,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       session: this.session,
       id: jid,
     });
-    const response = await promisify(this.client.GetContact)(request);
+    const response = await promisify(this.client.GetContactById)(request);
     const data = parseJson(response);
     return this.toWAContact(data);
   }
