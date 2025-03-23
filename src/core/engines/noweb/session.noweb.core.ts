@@ -154,6 +154,7 @@ import { sleep, waitUntil } from '@waha/utils/promiseTimeout';
 import { exclude } from '@waha/utils/reactive/ops/exclude';
 import { SingleDelayedJobRunner } from '@waha/utils/SingleDelayedJobRunner';
 import { SinglePeriodicJobRunner } from '@waha/utils/SinglePeriodicJobRunner';
+import { StatusTracker } from '@waha/utils/StatusTracker';
 import * as Buffer from 'buffer';
 import { Agent } from 'https';
 import * as lodash from 'lodash';
@@ -216,6 +217,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   store: INowebStore;
   private qr: QR;
 
+  private statusTracker = new StatusTracker();
+
   public constructor(config) {
     super(config);
     this.shouldRestart = true;
@@ -252,6 +255,15 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       this.logger,
     );
     this.authNOWEBStore = null;
+  }
+
+  protected set status(value: WAHASessionStatus) {
+    this.statusTracker.track(value);
+    super.status = value;
+  }
+
+  public get status() {
+    return super.status;
   }
 
   async start() {
@@ -419,6 +431,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       );
       return;
     }
+
     this.startDelayedJob.schedule(async () => {
       if (!this.shouldRestart) {
         this.logger.warn(
@@ -443,12 +456,20 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         this.resubscribeToKnownPresences();
         return;
       } else if (connection === 'close') {
+        if (this.statusTracker.isStuckInStarting()) {
+          this.logger.error(
+            'Session stuck in STARTING status, force stopping the session.',
+          );
+          await this.failed();
+          return;
+        }
+
+        // reconnect if not logged out
         const shouldReconnect =
           // @ts-ignore: Property output does not exist on type 'Error'
           lastDisconnect.error?.output?.statusCode !==
           DisconnectReason.loggedOut;
         this.qr.save('');
-        // reconnect if not logged out
         if (shouldReconnect) {
           if (lastDisconnect.error) {
             this.logger.info(
