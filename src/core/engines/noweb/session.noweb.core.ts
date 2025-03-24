@@ -1344,7 +1344,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   public async getPresence(chatId: string): Promise<WAHAChatPresences> {
     const remoteJid = toJID(chatId);
     if (!(remoteJid in this.store.presences)) {
-      this.store.presences[remoteJid] = [];
+      this.store.presences[remoteJid] = {};
       await this.sock.presenceSubscribe(remoteJid);
       await sleep(1000);
     }
