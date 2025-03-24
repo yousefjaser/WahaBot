@@ -456,9 +456,19 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         this.resubscribeToKnownPresences();
         return;
       } else if (connection === 'close') {
+        this.qr.save('');
+
         if (this.statusTracker.isStuckInStarting()) {
           this.logger.error(
             'Session stuck in STARTING status, force stopping the session.',
+          );
+          await this.failed();
+          return;
+        }
+
+        if (this.status == WAHASessionStatus.SCAN_QR_CODE) {
+          this.logger.warn(
+            'QR code has not been scanned yet, force stopping the session.',
           );
           await this.failed();
           return;
@@ -469,7 +479,6 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
           // @ts-ignore: Property output does not exist on type 'Error'
           lastDisconnect.error?.output?.statusCode !==
           DisconnectReason.loggedOut;
-        this.qr.save('');
         if (shouldReconnect) {
           if (lastDisconnect.error) {
             this.logger.info(
