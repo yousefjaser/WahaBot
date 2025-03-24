@@ -18,6 +18,7 @@ import {
   LabelAssociation,
   LabelAssociationType,
 } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+import { PresenceProxy } from '@waha/core/engines/noweb/PresenceProxy';
 import { IGroupRepository } from '@waha/core/engines/noweb/store/IGroupRepository';
 import { ILabelAssociationRepository } from '@waha/core/engines/noweb/store/ILabelAssociationsRepository';
 import { ILabelsRepository } from '@waha/core/engines/noweb/store/ILabelsRepository';
@@ -71,7 +72,7 @@ export class NowebPersistentStore implements INowebStore {
     this.messagesRepo = storage.getMessagesRepository();
     this.labelsRepo = storage.getLabelsRepository();
     this.labelAssociationsRepo = storage.getLabelAssociationRepository();
-    this.presences = {};
+    this.presences = new PresenceProxy().proxy;
     this.lock = new AsyncLock({ maxPending: Infinity });
   }
 
