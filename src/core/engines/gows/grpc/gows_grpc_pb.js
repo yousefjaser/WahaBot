@@ -290,6 +290,17 @@ function deserialize_messages_MessageResponse(buffer_arg) {
   return gows_pb.MessageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_messages_NewMessageIDResponse(arg) {
+  if (!(arg instanceof gows_pb.NewMessageIDResponse)) {
+    throw new Error('Expected argument of type messages.NewMessageIDResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_messages_NewMessageIDResponse(buffer_arg) {
+  return gows_pb.NewMessageIDResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_messages_Newsletter(arg) {
   if (!(arg instanceof gows_pb.Newsletter)) {
     throw new Error('Expected argument of type messages.Newsletter');
@@ -910,7 +921,18 @@ getProfilePicture: {
   //
 // Message
 //
-sendMessage: {
+generateNewMessageID: {
+    path: '/messages.MessageService/GenerateNewMessageID',
+    requestStream: false,
+    responseStream: false,
+    requestType: gows_pb.Session,
+    responseType: gows_pb.NewMessageIDResponse,
+    requestSerialize: serialize_messages_Session,
+    requestDeserialize: deserialize_messages_Session,
+    responseSerialize: serialize_messages_NewMessageIDResponse,
+    responseDeserialize: deserialize_messages_NewMessageIDResponse,
+  },
+  sendMessage: {
     path: '/messages.MessageService/SendMessage',
     requestStream: false,
     responseStream: false,

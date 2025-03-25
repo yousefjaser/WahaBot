@@ -398,6 +398,10 @@ export abstract class WhatsappSession {
   /**
    * Other methods
    */
+  generateNewMessageId(): Promise<string> {
+    throw new NotImplementedByEngineError();
+  }
+
   abstract checkNumberStatus(request: CheckNumberStatusQuery);
 
   abstract sendText(request: MessageTextRequest);
@@ -853,6 +857,9 @@ export abstract class WhatsappSession {
     throw new NotImplementedByEngineError();
   }
 
+  /**
+   * Engine methods
+   */
   public async getEngineInfo(): Promise<any> {
     return {};
   }

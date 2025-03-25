@@ -538,6 +538,14 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   /**
    * Other methods
    */
+  async generateNewMessageId(): Promise<string> {
+    const response = await promisify(this.client.GenerateNewMessageID)(
+      this.session,
+    );
+    const data = response.toObject();
+    return data.id;
+  }
+
   async sendText(request: MessageTextRequest) {
     const jid = toJID(this.ensureSuffix(request.chatId));
     const message = new messages.MessageRequest({
@@ -587,19 +595,19 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     return this.messageResponse(jid, data);
   }
 
-  protected checkStatusRequest(request: StatusRequest) {
-    if (request.contacts && request.contacts?.length > 0) {
-      const msg =
-        "GOWS doesn't accept 'contacts'. Remove the field to send status to all contacts.";
-      throw new UnprocessableEntityException(msg);
+  protected async prepareJidsForStatus(contacts: string[]) {
+    if (!contacts || contacts.length == 0) {
+      return [];
     }
+    return contacts.map(toJID);
   }
 
   public async sendTextStatus(status: TextStatus) {
-    this.checkStatusRequest(status);
-
+    const participants = await this.prepareJidsForStatus(status.contacts);
     const message = new messages.MessageRequest({
+      id: status.id,
       jid: Jid.BROADCAST,
+      participants: participants,
       text: status.text,
       session: this.session,
       backgroundColor: new messages.OptionalString({
@@ -617,13 +625,14 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   }
 
   public async deleteStatus(request: DeleteStatusRequest) {
-    this.checkStatusRequest(request);
+    const participants = await this.prepareJidsForStatus(request.contacts);
     const key = parseMessageIdSerialized(request.id, true);
     const message = new messages.RevokeMessageRequest({
       session: this.session,
       jid: BROADCAST_ID,
       sender: '',
       messageId: key.id,
+      participants: participants,
     });
     const response = await promisify(this.client.RevokeMessage)(message);
     const data = response.toObject();

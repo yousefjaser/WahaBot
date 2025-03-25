@@ -5,7 +5,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { GetChatMessagesQuery } from '@waha/structures/chats.dto';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 import {
   SessionBaseRequest,
@@ -348,4 +348,13 @@ export class MessageButtonReply extends ChatRequest {
   @IsString()
   @IsNotEmpty()
   selectedButtonID: string;
+}
+
+export class NewMessageIDResponse {
+  @ApiProperty({
+    description: 'Pre-generated message id',
+    example: 'BBBBBBBBBBBBBBBBB',
+    required: true,
+  })
+  id: string;
 }

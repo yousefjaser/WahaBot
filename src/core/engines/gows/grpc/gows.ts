@@ -2547,9 +2547,11 @@ export namespace messages {
             linkPreview?: boolean;
             linkPreviewHighQuality?: boolean;
             replyTo?: string;
+            id?: string;
+            participants?: string[];
         }) {
             super();
-            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [11], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("session" in data && data.session != undefined) {
                     this.session = data.session;
@@ -2577,6 +2579,12 @@ export namespace messages {
                 }
                 if ("replyTo" in data && data.replyTo != undefined) {
                     this.replyTo = data.replyTo;
+                }
+                if ("id" in data && data.id != undefined) {
+                    this.id = data.id;
+                }
+                if ("participants" in data && data.participants != undefined) {
+                    this.participants = data.participants;
                 }
             }
         }
@@ -2646,6 +2654,18 @@ export namespace messages {
         set replyTo(value: string) {
             pb_1.Message.setField(this, 9, value);
         }
+        get id() {
+            return pb_1.Message.getFieldWithDefault(this, 10, "") as string;
+        }
+        set id(value: string) {
+            pb_1.Message.setField(this, 10, value);
+        }
+        get participants() {
+            return pb_1.Message.getFieldWithDefault(this, 11, []) as string[];
+        }
+        set participants(value: string[]) {
+            pb_1.Message.setField(this, 11, value);
+        }
         static fromObject(data: {
             session?: ReturnType<typeof Session.prototype.toObject>;
             jid?: string;
@@ -2656,6 +2676,8 @@ export namespace messages {
             linkPreview?: boolean;
             linkPreviewHighQuality?: boolean;
             replyTo?: string;
+            id?: string;
+            participants?: string[];
         }): MessageRequest {
             const message = new MessageRequest({});
             if (data.session != null) {
@@ -2685,6 +2707,12 @@ export namespace messages {
             if (data.replyTo != null) {
                 message.replyTo = data.replyTo;
             }
+            if (data.id != null) {
+                message.id = data.id;
+            }
+            if (data.participants != null) {
+                message.participants = data.participants;
+            }
             return message;
         }
         toObject() {
@@ -2698,6 +2726,8 @@ export namespace messages {
                 linkPreview?: boolean;
                 linkPreviewHighQuality?: boolean;
                 replyTo?: string;
+                id?: string;
+                participants?: string[];
             } = {};
             if (this.session != null) {
                 data.session = this.session.toObject();
@@ -2726,6 +2756,12 @@ export namespace messages {
             if (this.replyTo != null) {
                 data.replyTo = this.replyTo;
             }
+            if (this.id != null) {
+                data.id = this.id;
+            }
+            if (this.participants != null) {
+                data.participants = this.participants;
+            }
             return data;
         }
         serialize(): Uint8Array;
@@ -2750,6 +2786,10 @@ export namespace messages {
                 writer.writeBool(8, this.linkPreviewHighQuality);
             if (this.replyTo.length)
                 writer.writeString(9, this.replyTo);
+            if (this.id.length)
+                writer.writeString(10, this.id);
+            if (this.participants.length)
+                writer.writeRepeatedString(11, this.participants);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -2785,6 +2825,12 @@ export namespace messages {
                         break;
                     case 9:
                         message.replyTo = reader.readString();
+                        break;
+                    case 10:
+                        message.id = reader.readString();
+                        break;
+                    case 11:
+                        pb_1.Message.addToRepeatedField(message, 11, reader.readString());
                         break;
                     default: reader.skipField();
                 }
@@ -3074,6 +3120,73 @@ export namespace messages {
         }
         static deserializeBinary(bytes: Uint8Array): MessageResponse {
             return MessageResponse.deserialize(bytes);
+        }
+    }
+    export class NewMessageIDResponse extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            id?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("id" in data && data.id != undefined) {
+                    this.id = data.id;
+                }
+            }
+        }
+        get id() {
+            return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+        }
+        set id(value: string) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        static fromObject(data: {
+            id?: string;
+        }): NewMessageIDResponse {
+            const message = new NewMessageIDResponse({});
+            if (data.id != null) {
+                message.id = data.id;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                id?: string;
+            } = {};
+            if (this.id != null) {
+                data.id = this.id;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.id.length)
+                writer.writeString(1, this.id);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): NewMessageIDResponse {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new NewMessageIDResponse();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.id = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): NewMessageIDResponse {
+            return NewMessageIDResponse.deserialize(bytes);
         }
     }
     export class ProfilePictureRequest extends pb_1.Message {
@@ -4142,9 +4255,10 @@ export namespace messages {
             jid?: string;
             sender?: string;
             messageId?: string;
+            participants?: string[];
         }) {
             super();
-            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [5], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("session" in data && data.session != undefined) {
                     this.session = data.session;
@@ -4157,6 +4271,9 @@ export namespace messages {
                 }
                 if ("messageId" in data && data.messageId != undefined) {
                     this.messageId = data.messageId;
+                }
+                if ("participants" in data && data.participants != undefined) {
+                    this.participants = data.participants;
                 }
             }
         }
@@ -4187,11 +4304,18 @@ export namespace messages {
         set messageId(value: string) {
             pb_1.Message.setField(this, 4, value);
         }
+        get participants() {
+            return pb_1.Message.getFieldWithDefault(this, 5, []) as string[];
+        }
+        set participants(value: string[]) {
+            pb_1.Message.setField(this, 5, value);
+        }
         static fromObject(data: {
             session?: ReturnType<typeof Session.prototype.toObject>;
             jid?: string;
             sender?: string;
             messageId?: string;
+            participants?: string[];
         }): RevokeMessageRequest {
             const message = new RevokeMessageRequest({});
             if (data.session != null) {
@@ -4206,6 +4330,9 @@ export namespace messages {
             if (data.messageId != null) {
                 message.messageId = data.messageId;
             }
+            if (data.participants != null) {
+                message.participants = data.participants;
+            }
             return message;
         }
         toObject() {
@@ -4214,6 +4341,7 @@ export namespace messages {
                 jid?: string;
                 sender?: string;
                 messageId?: string;
+                participants?: string[];
             } = {};
             if (this.session != null) {
                 data.session = this.session.toObject();
@@ -4226,6 +4354,9 @@ export namespace messages {
             }
             if (this.messageId != null) {
                 data.messageId = this.messageId;
+            }
+            if (this.participants != null) {
+                data.participants = this.participants;
             }
             return data;
         }
@@ -4241,6 +4372,8 @@ export namespace messages {
                 writer.writeString(3, this.sender);
             if (this.messageId.length)
                 writer.writeString(4, this.messageId);
+            if (this.participants.length)
+                writer.writeRepeatedString(5, this.participants);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -4261,6 +4394,9 @@ export namespace messages {
                         break;
                     case 4:
                         message.messageId = reader.readString();
+                        break;
+                    case 5:
+                        pb_1.Message.addToRepeatedField(message, 5, reader.readString());
                         break;
                     default: reader.skipField();
                 }
@@ -7444,6 +7580,15 @@ export namespace messages {
                 responseSerialize: (message: CheckPhonesResponse) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => CheckPhonesResponse.deserialize(new Uint8Array(bytes))
             },
+            GenerateNewMessageID: {
+                path: "/messages.MessageService/GenerateNewMessageID",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: Session) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => Session.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: NewMessageIDResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => NewMessageIDResponse.deserialize(new Uint8Array(bytes))
+            },
             SendMessage: {
                 path: "/messages.MessageService/SendMessage",
                 requestStream: false,
@@ -7654,6 +7799,7 @@ export namespace messages {
         abstract SendChatPresence(call: grpc_1.ServerUnaryCall<ChatPresenceRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract SubscribePresence(call: grpc_1.ServerUnaryCall<SubscribePresenceRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
         abstract CheckPhones(call: grpc_1.ServerUnaryCall<CheckPhonesRequest, CheckPhonesResponse>, callback: grpc_1.sendUnaryData<CheckPhonesResponse>): void;
+        abstract GenerateNewMessageID(call: grpc_1.ServerUnaryCall<Session, NewMessageIDResponse>, callback: grpc_1.sendUnaryData<NewMessageIDResponse>): void;
         abstract SendMessage(call: grpc_1.ServerUnaryCall<MessageRequest, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract SendReaction(call: grpc_1.ServerUnaryCall<MessageReaction, MessageResponse>, callback: grpc_1.sendUnaryData<MessageResponse>): void;
         abstract MarkRead(call: grpc_1.ServerUnaryCall<MarkReadRequest, Empty>, callback: grpc_1.sendUnaryData<Empty>): void;
@@ -7762,6 +7908,9 @@ export namespace messages {
         };
         CheckPhones: GrpcUnaryServiceInterface<CheckPhonesRequest, CheckPhonesResponse> = (message: CheckPhonesRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<CheckPhonesResponse>, callback?: grpc_1.requestCallback<CheckPhonesResponse>): grpc_1.ClientUnaryCall => {
             return super.CheckPhones(message, metadata, options, callback);
+        };
+        GenerateNewMessageID: GrpcUnaryServiceInterface<Session, NewMessageIDResponse> = (message: Session, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<NewMessageIDResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<NewMessageIDResponse>, callback?: grpc_1.requestCallback<NewMessageIDResponse>): grpc_1.ClientUnaryCall => {
+            return super.GenerateNewMessageID(message, metadata, options, callback);
         };
         SendMessage: GrpcUnaryServiceInterface<MessageRequest, MessageResponse> = (message: MessageRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<MessageResponse>, callback?: grpc_1.requestCallback<MessageResponse>): grpc_1.ClientUnaryCall => {
             return super.SendMessage(message, metadata, options, callback);
