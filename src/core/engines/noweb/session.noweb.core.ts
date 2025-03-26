@@ -457,7 +457,16 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
         return;
       } else if (connection === 'close') {
         this.qr.save('');
+        const statusCode = lastDisconnect.error?.output?.statusCode;
 
+        // Restart required from the server
+        const restartRequired = statusCode === DisconnectReason.restartRequired;
+        if (restartRequired) {
+          this.restartClient();
+          return;
+        }
+
+        // Stuck in STARTING status
         if (this.statusTracker.isStuckInStarting()) {
           this.logger.error(
             'Session stuck in STARTING status, force stopping the session.',
@@ -466,6 +475,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
           return;
         }
 
+        // Do not reconnect if the QR code has not been scanned yet
         if (this.status == WAHASessionStatus.SCAN_QR_CODE) {
           this.logger.warn(
             'QR code has not been scanned yet, force stopping the session.',
@@ -474,11 +484,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
           return;
         }
 
-        // reconnect if not logged out
-        const shouldReconnect =
-          // @ts-ignore: Property output does not exist on type 'Error'
-          lastDisconnect.error?.output?.statusCode !==
-          DisconnectReason.loggedOut;
+        // Reconnect if not logged out
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
         if (shouldReconnect) {
           if (lastDisconnect.error) {
             this.logger.info(
@@ -486,12 +493,14 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
             );
           }
           this.restartClient();
-        } else {
-          this.logger.error(
-            `Connection closed due to '${lastDisconnect.error}', do not reconnect the session.`,
-          );
-          await this.failed();
+          return;
         }
+
+        // Unknown error or logged out
+        this.logger.error(
+          `Connection closed due to '${lastDisconnect.error}', do not reconnect the session.`,
+        );
+        await this.failed();
       }
 
       // Save QR
