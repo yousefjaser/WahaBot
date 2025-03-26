@@ -36,5 +36,6 @@ export const VERSION: WAHAEnvironment = {
   version: '2025.3.1',
   engine: getEngineName(),
   tier: getWAHAVersion(),
-  browser: getBrowserExecutablePath(),
+  browser:
+    getEngineName() === WAHAEngine.WEBJS ? getBrowserExecutablePath() : null,
 };
