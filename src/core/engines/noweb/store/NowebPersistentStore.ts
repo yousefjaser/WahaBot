@@ -364,7 +364,12 @@ export class NowebPersistentStore implements INowebStore {
 
       if (update.imgUrl === 'changed') {
         contact.imgUrl = this.socket
-          ? await this.socket?.profilePictureUrl(contact.id)
+          ? await this.socket?.profilePictureUrl(contact.id).catch((error) => {
+              this.logger.warn(
+                `failed to get profile picture for contact '${contact.id}': ${error}`,
+              );
+              return undefined;
+            })
           : undefined;
       } else if (update.imgUrl === 'removed') {
         delete contact.imgUrl;
