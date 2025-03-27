@@ -1,4 +1,5 @@
 import {
+  getContentType,
   getUrlFromDirectPath,
   isJidGroup,
   isJidStatusBroadcast,
@@ -129,6 +130,7 @@ import { promisify } from 'util';
 
 import * as gows from './types';
 import MessageServiceClient = messages.MessageServiceClient;
+import { ReplyToMessage } from '@waha/structures/message.dto';
 
 enum WhatsMeowEvent {
   CONNECTED = 'gows.ConnectedEventData',
@@ -1396,7 +1398,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
     const fromToParticipant = getFromToParticipant(message);
     const id = buildMessageId(message);
     const body = this.extractBody(message.Message);
-    const replyTo = null; // TODO: this.extractReplyTo(message.message);
+    const replyTo = this.extractReplyTo(message.Message);
     let ack;
     if (message.Status) {
       ack = statusToAck(message.Status);
@@ -1452,6 +1454,25 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       body = media?.caption;
     }
     return body;
+  }
+
+  protected extractReplyTo(message): ReplyToMessage | null {
+    const msgType = getContentType(message);
+    const contextInfo = message[msgType]?.contextInfo;
+    if (!contextInfo) {
+      return null;
+    }
+    const quotedMessage = contextInfo.quotedMessage;
+    if (!quotedMessage) {
+      return null;
+    }
+    const body = this.extractBody(quotedMessage);
+    return {
+      id: contextInfo.stanzaID,
+      participant: toCusFormat(contextInfo.participant),
+      body: body,
+      _data: quotedMessage,
+    };
   }
 
   public async getEngineInfo() {
