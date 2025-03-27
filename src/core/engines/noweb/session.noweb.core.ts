@@ -2040,6 +2040,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       id: contextInfo.stanzaId,
       participant: toCusFormat(contextInfo.participant),
       body: body,
+      _data: quotedMessage,
     };
   }
 

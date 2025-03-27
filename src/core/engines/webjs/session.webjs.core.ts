@@ -1422,6 +1422,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       id: quotedMsg.id?.id,
       participant: quotedMsg.author || quotedMsg.from,
       body: quotedMsg.caption || quotedMsg.body,
+      _data: quotedMsg,
     };
   }
 
