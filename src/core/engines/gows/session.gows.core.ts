@@ -642,7 +642,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   }
 
   protected messageResponse(jid, data) {
-    const message = parseJson(data.message);
+    const message = data.message ? parseJson(data.message) : null;
     const id = buildMessageId({
       ID: data.id,
       IsFromMe: true,
