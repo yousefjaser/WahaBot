@@ -920,7 +920,7 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
       jid: key.remoteJid,
       messageId: key.id,
       reaction: request.reaction,
-      sender: key.fromMe ? this.me.id : key.participant,
+      sender: key.fromMe ? this.me.id : key.participant || key.remoteJid,
     });
     const response = await promisify(this.client.SendReaction)(message);
     const data = response.toObject();
