@@ -971,13 +971,34 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
 
   async setReaction(request: MessageReactionRequest) {
     const key = parseMessageIdSerialized(request.messageId);
-    const reactionMessage = {
-      react: {
-        text: request.reaction,
-        key: key,
-      },
-    };
-    return this.sock.sendMessage(key.remoteJid, reactionMessage);
+    if (isNewsletter(key.remoteJid)) {
+      let serverId = Number(key.id);
+      if (!serverId) {
+        const msg = await this.store.getMessageById(key.remoteJid, key.id);
+        if (msg) {
+          // @ts-ignore
+          serverId = Number(msg.key.server_id);
+        }
+      }
+      if (!serverId) {
+        throw new UnprocessableEntityException(
+          `Unable to get server id for channel message '${key.id}'`,
+        );
+      }
+      return this.sock.newsletterReactMessage(
+        key.remoteJid,
+        serverId.toString(),
+        request.reaction,
+      );
+    } else {
+      const reactionMessage = {
+        react: {
+          text: request.reaction,
+          key: key,
+        },
+      };
+      return this.sock.sendMessage(key.remoteJid, reactionMessage);
+    }
   }
 
   async setStar(request: MessageStarRequest) {
