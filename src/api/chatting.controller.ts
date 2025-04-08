@@ -166,12 +166,6 @@ export class ChattingController {
     return whatsapp.sendLocation(request);
   }
 
-  @Post('/sendLinkPreview')
-  async sendLinkPreview(@Body() request: MessageLinkPreviewRequest) {
-    const whatsapp = await this.manager.getWorkingSession(request.session);
-    return whatsapp.sendLinkPreview(request);
-  }
-
   @Post('/sendContactVcard')
   async sendContactVcard(@Body() request: MessageContactVcardRequest) {
     const whatsapp = await this.manager.getWorkingSession(request.session);
@@ -235,5 +229,12 @@ export class ChattingController {
   async reply(@Body() request: MessageReplyRequest) {
     const whatsapp = await this.manager.getWorkingSession(request.session);
     return whatsapp.reply(request);
+  }
+
+  @Post('/sendLinkPreview')
+  @ApiOperation({ deprecated: true })
+  async sendLinkPreview_DEPRECATED(@Body() request: MessageLinkPreviewRequest) {
+    const whatsapp = await this.manager.getWorkingSession(request.session);
+    return whatsapp.sendLinkPreview(request);
   }
 }
