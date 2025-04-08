@@ -1959,6 +1959,8 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
       proto.Message.ProtocolMessage.Type.EPHEMERAL_SYNC_RESPONSE
     )
       return;
+    // Ignore key distribution messages
+    if (message.message.senderKeyDistributionMessage) return;
 
     if (downloadMedia) {
       try {
