@@ -63,10 +63,10 @@ import {
   ChatRequest,
   CheckNumberStatusQuery,
   EditMessageRequest,
-  MessageButtonReply,
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
+  MessageLinkCustomPreviewRequest,
   MessageLocationRequest,
   MessageReactionRequest,
   MessageReplyRequest,
@@ -689,6 +689,12 @@ export class WhatsappSessionGoWSCore extends WhatsappSession {
   }
 
   sendVoice(request: MessageVoiceRequest) {
+    throw new AvailableInPlusVersion();
+  }
+
+  sendLinkCustomPreview(
+    request: MessageLinkCustomPreviewRequest,
+  ): Promise<any> {
     throw new AvailableInPlusVersion();
   }
 

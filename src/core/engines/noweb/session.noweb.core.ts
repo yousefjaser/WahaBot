@@ -97,6 +97,7 @@ import {
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
+  MessageLinkCustomPreviewRequest,
   MessageLinkPreviewRequest,
   MessageLocationRequest,
   MessagePollRequest,
@@ -821,6 +822,12 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   }
 
   sendVoice(request: MessageVoiceRequest) {
+    throw new AvailableInPlusVersion();
+  }
+
+  sendLinkCustomPreview(
+    request: MessageLinkCustomPreviewRequest,
+  ): Promise<any> {
     throw new AvailableInPlusVersion();
   }
 

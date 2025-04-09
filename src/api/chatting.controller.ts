@@ -23,6 +23,7 @@ import {
   MessageFileRequest,
   MessageForwardRequest,
   MessageImageRequest,
+  MessageLinkCustomPreviewRequest,
   MessageLinkPreviewRequest,
   MessageLocationRequest,
   MessagePollRequest,
@@ -93,6 +94,25 @@ export class ChattingController {
   async sendVideo(@Body() request: MessageVideoRequest) {
     const whatsapp = await this.manager.getWorkingSession(request.session);
     return whatsapp.sendVideo(request);
+  }
+
+  @Post('/send/link-custom-preview')
+  @ApiOperation({
+    summary: 'Send a text message with a CUSTOM link preview.',
+    description:
+      'You can use regular /api/sendText if you wanna send auto-generated link preview.',
+  })
+  @UsePipes(new WAHAValidationPipe())
+  async sendLinkCustomPreview(
+    @Body() request: MessageLinkCustomPreviewRequest,
+  ): Promise<any> {
+    const whatsapp = await this.manager.getWorkingSession(request.session);
+    if (!request.text.includes(request.preview.url)) {
+      throw new Error(
+        '"text" must include the URL provided in the "preview.url"',
+      );
+    }
+    return whatsapp.sendLinkCustomPreview(request);
   }
 
   @Post('/sendButtons')
