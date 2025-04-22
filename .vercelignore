@@ -11,5 +11,4 @@ node_modules
 sessions
 tests
 examples
-.precommit
-.yarn 
+.precommit 
