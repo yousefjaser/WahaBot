@@ -24,7 +24,7 @@
     "gows:proto:fetch": "node scripts/gows-proto.js fetch",
     "gows:proto:build": "node scripts/gows-proto.js build",
     "gows:proto": "yarn gows:proto:fetch && yarn gows:proto:build",
-    "vercel-build": "yarn gows:proto && yarn build"
+    "vercel-build": "yarn install && yarn gows:proto && yarn build"
   },
   "dependencies": {
     "@adiwajshing/baileys": "github:devlikeapro/Baileys#fork-master-channels-6712",

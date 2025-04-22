@@ -1,0 +1,15 @@
+README.md
+GITHUB_README.md
+CHANGELOG.md
+.git
+.github
+.gitignore
+.docker*
+docker-compose*
+Dockerfile*
+node_modules
+sessions
+tests
+examples
+.precommit
+.yarn 
