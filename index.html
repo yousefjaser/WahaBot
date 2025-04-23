@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f5f5f5;
             margin: 0;
             padding: 20px;
             direction: rtl;
@@ -17,28 +17,53 @@
             max-width: 800px;
             margin: 0 auto;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         h1 {
             color: #4CAF50;
+            margin-top: 10px;
         }
         img {
             border-radius: 50%;
             max-width: 150px;
+            margin-bottom: 20px;
         }
         .links {
-            margin-top: 20px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .links a {
+        .link-btn {
             display: inline-block;
-            margin: 0 10px;
-            padding: 10px 15px;
+            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .link-btn:hover {
+            background-color: #388E3C;
+        }
+        .features {
+            margin-top: 40px;
+            text-align: right;
+        }
+        .feature {
+            margin-bottom: 15px;
+            padding-right: 20px;
+            position: relative;
+        }
+        .feature:before {
+            content: "✓";
+            color: #4CAF50;
+            font-weight: bold;
+            position: absolute;
+            right: 0;
         }
     </style>
 </head>
@@ -50,9 +75,19 @@
         <p>واجهة برمجة تطبيقات HTTP لواتساب تتيح لك التحكم في واتساب من خلال طلبات HTTP</p>
         
         <div class="links">
-            <a href="/api">API</a>
-            <a href="/docs">التوثيق</a>
-            <a href="/swagger">سواجر</a>
+            <a class="link-btn" href="/api">واجهة API</a>
+            <a class="link-btn" href="/docs">التوثيق</a>
+            <a class="link-btn" href="/swagger">سواجر</a>
+        </div>
+
+        <div class="features">
+            <h3>المميزات:</h3>
+            <div class="feature">إرسال واستقبال الرسائل النصية</div>
+            <div class="feature">إرسال واستقبال الوسائط (صور، فيديوهات، مستندات)</div>
+            <div class="feature">إدارة المجموعات</div>
+            <div class="feature">دعم جلسات متعددة لحسابات واتساب</div>
+            <div class="feature">واجهة REST API سهلة الاستخدام</div>
+            <div class="feature">توثيق كامل باستخدام Swagger</div>
         </div>
     </div>
 </body>
